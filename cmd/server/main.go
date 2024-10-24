@@ -1,25 +1,24 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/arefev/mtrcstore/internal/http/middleware"
+	"github.com/arefev/mtrcstore/internal/server/http/handler"
 )
 
-
-func updateMetric(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("update Metric"))
-}
-
-
 func main() {
-
-	mux := http.NewServeMux()
-	mux.Handle("/update/counter/someMetric/123", middleware.PostOnly(http.HandlerFunc(updateMetric)))
-
-	err := http.ListenAndServe(":8080", mux)
-	if (err != nil) {
+	if err := run(); err != nil {
 		panic(err)
 	}
+}
 
+func run() error {
+	const addr = "localhost:8080"
+
+	mux := http.NewServeMux()
+	handler.UpdateHandler(mux)
+
+	fmt.Printf("Server up by address %s\n", addr)
+	return http.ListenAndServe(addr, mux)
 }

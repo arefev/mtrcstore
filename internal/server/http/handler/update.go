@@ -49,7 +49,10 @@ func update(w http.ResponseWriter, r *http.Request) {
 func parseUrl(path string) ([]string, error) {
 	const pathSize = 4
 	var parsed = make([]string, pathSize)
-	parsed = strings.Split(path, "/")[1:]
+	parsed = strings.Split(path, "/")
+	if len(parsed) > 1 {
+		parsed = parsed[1:]
+	}
 
 	if len(parsed) != pathSize {
 		return parsed, errors.New("path url must be view as /update/{type}/{name}/{value}")

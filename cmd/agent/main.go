@@ -9,12 +9,14 @@ import (
 func main() {
 	const pollInterval = 2
 	const reportInterval = 10
+	const serverHost = "http://localhost:8080"
 
-	storage := &repository.Memory{}
+	storage := repository.NewMemory()
 	worker := agent.Worker{
 		PollInterval: pollInterval,
 		ReportInterval: reportInterval,
-		Storage: storage,
+		Storage: &storage,
+		ServerHost: serverHost,
 	}
 	worker.Run()
 }

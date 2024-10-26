@@ -5,7 +5,6 @@ import (
 	"github.com/arefev/mtrcstore/internal/agent/repository"
 )
 
-
 func main() {
 	const pollInterval = 2
 	const reportInterval = 10
@@ -13,10 +12,10 @@ func main() {
 
 	storage := repository.NewMemory()
 	worker := agent.Worker{
-		PollInterval: pollInterval,
+		PollInterval:   pollInterval,
 		ReportInterval: reportInterval,
-		Storage: &storage,
-		ServerHost: serverHost,
+		Storage:        &storage,
+		ServerHost:     serverHost,
 	}
 	worker.Run()
 }

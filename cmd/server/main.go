@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/arefev/mtrcstore/internal/server/http/handler"
+	"github.com/arefev/mtrcstore/internal/server/repository"
 )
 
 func main() {
@@ -16,8 +17,13 @@ func main() {
 func run() error {
 	const addr = "localhost:8080"
 
+	storage := repository.NewMemory()
+	handler := handler.UpdateHandler{
+		Storage: &storage,
+	}
+
 	mux := http.NewServeMux()
-	handler.UpdateHandler(mux)
+	handler.Handle(mux)
 
 	fmt.Printf("Server up by address %s\n", addr)
 	return http.ListenAndServe(addr, mux)

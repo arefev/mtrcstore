@@ -1,7 +1,5 @@
 package repository
 
-import "strconv"
-
 type gauge float64
 type counter int64
 
@@ -17,21 +15,13 @@ func NewMemory() memory {
 	}
 }
 
-func (s *memory) Save(mType string, name string, value string) error {
-	
+func (s *memory) Save(mType string, name string, value float64) error {
+
 	switch mType {
 	case "counter":
-		val, err := strconv.Atoi(value)
-		if err != nil {
-			
-		}
-		s.Counter[name] = counter(val)
+		s.Counter[name] += counter(value)
 	default:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-
-		}
-		s.Gauge[name] = gauge(val)
+		s.Gauge[name] = gauge(value)
 	}
 
 	return nil

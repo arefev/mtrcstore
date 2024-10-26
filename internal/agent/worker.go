@@ -14,16 +14,16 @@ const contentType = "text/plain"
 
 type Worker struct {
 	ReportInterval float64
-	PollInterval int
-	Storage repository.Storage
-	ServerHost string
+	PollInterval   int
+	Storage        repository.Storage
+	ServerHost     string
 }
 
 func (w *Worker) Run() {
 	var period float64
 	var memStats runtime.MemStats
 	start := time.Now()
-	
+
 	for {
 		w.Storage.IncrementCounter()
 
@@ -53,7 +53,7 @@ func (w *Worker) read(memStats *runtime.MemStats) {
 func (w *Worker) report() {
 	fmt.Println("\nSend metrics to server")
 	fmt.Printf("Data = %v\n\n", w.Storage)
-	
+
 	w.sendGauges()
 	w.sendCounters()
 }
@@ -65,7 +65,7 @@ func (w *Worker) getReportUrl(mType string, name string, val float64) string {
 func (w *Worker) sendGauges() {
 	const mType = "gauge"
 	r := bytes.NewReader([]byte(""))
-	
+
 	for name, val := range w.Storage.GetGauges() {
 		qPath := w.getReportUrl(mType, name, float64(val))
 		if _, err := http.Post(qPath, contentType, r); err != nil {
@@ -78,7 +78,7 @@ func (w *Worker) sendGauges() {
 func (w *Worker) sendCounters() {
 	const mType = "counter"
 	r := bytes.NewReader([]byte(""))
-	
+
 	for name, val := range w.Storage.GetCounters() {
 		qPath := w.getReportUrl(mType, name, float64(val))
 		if _, err := http.Post(qPath, contentType, r); err != nil {

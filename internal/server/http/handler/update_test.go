@@ -116,6 +116,7 @@ func TestUpdateHandler_update(t *testing.T) {
 			assert.Equal(t, test.want.response, string(resBody))
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
 
+			// Проверка сохранения данных
 			if test.want.testStorage {
 				var sValue float64
 				tValue := test.want.storageValue

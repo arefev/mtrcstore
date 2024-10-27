@@ -97,13 +97,13 @@ func TestUpdateHandler_update(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.want.urlPath, nil)
 
 			storage := repository.NewMemory()
-			handler := UpdateHandler{
+			handler := MetricHandlers{
 				Storage: &storage,
 			}
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			handler.update(w, request)
+			handler.Update(w, request)
 
 			res := w.Result()
 			// проверяем код ответа

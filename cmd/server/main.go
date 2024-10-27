@@ -24,6 +24,6 @@ func run(config Config) error {
 
 	r := server.InitRouter(&handler)
 
-	log.Printf("Server up by address %s\n", config.Address)
+	log.Printf("Server up on address %s\n", config.Address)
 	return http.ListenAndServe(config.Address, r)
 }

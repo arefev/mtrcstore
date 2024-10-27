@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"runtime"
 	"time"
@@ -34,6 +35,8 @@ func (w *Worker) Run() {
 		period = time.Until(start).Abs().Seconds()
 
 		if int(period) >= w.ReportInterval {
+			log.Printf("Run report after %d seconds", int(period))
+
 			w.report()
 			start = time.Now()
 			w.Storage.ClearCounter()

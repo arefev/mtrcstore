@@ -27,14 +27,12 @@ func (w *Worker) Run() {
 
 	for {
 		w.Storage.IncrementCounter()
-
 		w.read(&memStats)
 
 		time.Sleep(time.Duration(w.PollInterval * int(time.Second)))
 
 		period = time.Until(start).Abs().Seconds()
 
-		fmt.Printf("\nDuration %f\n", period)
 		if int(period) >= w.ReportInterval {
 			w.report()
 			start = time.Now()
@@ -45,16 +43,10 @@ func (w *Worker) Run() {
 
 func (w *Worker) read(memStats *runtime.MemStats) {
 	runtime.ReadMemStats(memStats)
-
 	w.Storage.Save(memStats)
-
-	fmt.Printf("%+v\n", w.Storage)
 }
 
 func (w *Worker) report() {
-	fmt.Println("\nSend metrics to server")
-	fmt.Printf("Data = %v\n\n", w.Storage)
-
 	w.sendGauges()
 	w.sendCounters()
 }

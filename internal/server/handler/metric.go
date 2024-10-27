@@ -25,9 +25,6 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.Storage.Save(mType, mName, mValue)
-
-	fmt.Printf("Type %s, Name %s, Value %f\n", mType, mName, mValue)
-	fmt.Printf("Storage has %+v\n", h.Storage)
 	w.Write([]byte("Metrics are updated!"))
 }
 
@@ -48,7 +45,6 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	html := service.MetricsHtml(h.Storage.Get())
-	fmt.Printf("Metrics %+v\n", h.Storage.Get())
 	w.Write([]byte(html))
 }
 

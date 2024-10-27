@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/arefev/mtrcstore/internal/server"
@@ -24,6 +24,6 @@ func run(config Config) error {
 
 	r := server.InitRouter(&handler)
 
-	fmt.Printf("Server up by address %s\n", config.Address)
+	log.Printf("Server up by address %s\n", config.Address)
 	return http.ListenAndServe(config.Address, r)
 }

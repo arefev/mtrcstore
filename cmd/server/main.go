@@ -10,14 +10,13 @@ import (
 )
 
 func main() {
+	parseFlags()
 	if err := run(); err != nil {
 		panic(err)
 	}
 }
 
 func run() error {
-	const addr = "localhost:8080"
-
 	storage := repository.NewMemory()
 	handler := handler.MetricHandlers{
 		Storage: &storage,
@@ -25,6 +24,6 @@ func run() error {
 
 	r := server.InitRouter(&handler)
 
-	fmt.Printf("Server up by address %s\n", addr)
-	return http.ListenAndServe(addr, r)
+	fmt.Printf("Server up by address %s\n", flagRunAddr)
+	return http.ListenAndServe(flagRunAddr, r)
 }

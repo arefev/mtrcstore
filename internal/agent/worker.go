@@ -11,9 +11,10 @@ import (
 )
 
 const contentType = "text/plain"
+const protocol = "http://"
 
 type Worker struct {
-	ReportInterval float64
+	ReportInterval int
 	PollInterval   int
 	Storage        repository.Storage
 	ServerHost     string
@@ -34,7 +35,7 @@ func (w *Worker) Run() {
 		period = time.Until(start).Abs().Seconds()
 
 		fmt.Printf("\nDuration %f\n", period)
-		if period >= w.ReportInterval {
+		if int(period) >= w.ReportInterval {
 			w.report()
 			start = time.Now()
 			w.Storage.ClearCounter()
@@ -59,7 +60,7 @@ func (w *Worker) report() {
 }
 
 func (w *Worker) getReportUrl(mType string, name string, val float64) string {
-	return fmt.Sprintf("%s/update/%s/%s/%f", w.ServerHost, mType, name, val)
+	return fmt.Sprintf("%s%s/update/%s/%s/%f", protocol, w.ServerHost, mType, name, val)
 }
 
 func (w *Worker) sendGauges() {

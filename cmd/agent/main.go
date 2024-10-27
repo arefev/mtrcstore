@@ -6,16 +6,14 @@ import (
 )
 
 func main() {
-	const pollInterval = 2
-	const reportInterval = 10
-	const serverHost = "http://localhost:8080"
+	parseFlags()
 
 	storage := repository.NewMemory()
 	worker := agent.Worker{
-		PollInterval:   pollInterval,
-		ReportInterval: reportInterval,
+		PollInterval:   flagPollInterval,
+		ReportInterval: flagReportInterval,
 		Storage:        &storage,
-		ServerHost:     serverHost,
+		ServerHost:     flagServerAddr,
 	}
 	worker.Run()
 }

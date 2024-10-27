@@ -15,7 +15,6 @@ type MetricHandlers struct {
 }
 
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
-
 	mType := chi.URLParam(r, "type")
 	mName := chi.URLParam(r, "name")
 	mValue, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)

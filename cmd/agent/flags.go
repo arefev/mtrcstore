@@ -2,17 +2,32 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
+
+	"github.com/caarlos0/env"
 )
 
-var flagServerAddr string
-var flagPollInterval int
-var flagReportInterval int
+type Config struct {
+	Address string `env:"ADDRESS"`
+	PollInterval int `env:"POLL_INTERVAL"`
+	ReportInterval int `env:"REPORT_INTERVAL"`
+}
 
-func parseFlags() {
+func ParseFlags() Config {
+	cnf := Config{}
+
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&flagServerAddr, "a", "localhost:8080", "server address and port")
-	f.IntVar(&flagPollInterval, "p", 2, "poll interval")
-	f.IntVar(&flagReportInterval, "r", 10, "report interval")
+	f.StringVar(&cnf.Address, "a", "localhost:8080", "server address and port")
+	f.IntVar(&cnf.PollInterval, "p", 2, "poll interval")
+	f.IntVar(&cnf.ReportInterval, "r", 10, "report interval")
 	f.Parse(os.Args[1:])
+
+	// var cnf Config
+	err := env.Parse(&cnf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cnf
 }

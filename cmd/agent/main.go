@@ -6,14 +6,14 @@ import (
 )
 
 func main() {
-	parseFlags()
+	config := ParseFlags()
 
 	storage := repository.NewMemory()
 	worker := agent.Worker{
-		PollInterval:   flagPollInterval,
-		ReportInterval: flagReportInterval,
+		PollInterval:   config.PollInterval,
+		ReportInterval: config.ReportInterval,
 		Storage:        &storage,
-		ServerHost:     flagServerAddr,
+		ServerHost:     config.Address,
 	}
 	worker.Run()
 }

@@ -1,17 +1,28 @@
-package handler
+package main
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arefev/mtrcstore/internal/server"
+	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestUpdateHandler_update(t *testing.T) {
+func Test_main(t *testing.T) {
+	storage := repository.NewMemory()
+	handler := handler.MetricHandlers{
+		Storage: &storage,
+	}
+	
+	r := server.InitRouter(&handler)
+	srv := httptest.NewServer(r)
+	defer srv.Close()
+
 	type want struct {
 		urlPath      string
 		code         int
@@ -29,14 +40,14 @@ func TestUpdateHandler_update(t *testing.T) {
 		{
 			name: "positive test #1",
 			want: want{
-				urlPath:      "/update/counter/test/123",
+				urlPath:      "/update/counter/test/1",
 				code:         http.StatusOK,
 				response:     `Metrics are updated!`,
 				contentType:  "text/plain; charset=utf-8",
 				testStorage:  false,
 				storageType:  "counter",
 				storageName:  "test",
-				storageValue: 123,
+				storageValue: 1,
 			},
 		},
 		{
@@ -49,7 +60,7 @@ func TestUpdateHandler_update(t *testing.T) {
 				testStorage:  false,
 				storageType:  "counter",
 				storageName:  "test",
-				storageValue: 123,
+				storageValue: 1,
 			},
 		},
 		{
@@ -57,25 +68,25 @@ func TestUpdateHandler_update(t *testing.T) {
 			want: want{
 				urlPath:      "/update/counter/test",
 				code:         http.StatusNotFound,
-				response:     ``,
-				contentType:  "",
+				response:     "404 page not found\n",
+				contentType:  "text/plain; charset=utf-8",
 				testStorage:  false,
 				storageType:  "counter",
 				storageName:  "test",
-				storageValue: 123,
+				storageValue: 1,
 			},
 		},
 		{
 			name: "positive counter storage test #1",
 			want: want{
-				urlPath:      "/update/counter/test/123",
+				urlPath:      "/update/counter/test/1",
 				code:         http.StatusOK,
 				response:     `Metrics are updated!`,
 				contentType:  "text/plain; charset=utf-8",
 				testStorage:  true,
 				storageType:  "counter",
 				storageName:  "test",
-				storageValue: 123,
+				storageValue: 2,
 			},
 		},
 		{
@@ -92,29 +103,21 @@ func TestUpdateHandler_update(t *testing.T) {
 			},
 		},
 	}
+
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, test.want.urlPath, nil)
+        t.Run(test.name, func(t *testing.T) {
+            // делаем запрос с помощью библиотеки resty к адресу запущенного сервера, 
+            // который хранится в поле URL соответствующей структуры
+			req := resty.New().R()
+            req.Method = http.MethodPost
+            req.URL = srv.URL + test.want.urlPath
 
-			storage := repository.NewMemory()
-			handler := MetricHandlers{
-				Storage: &storage,
-			}
-
-			// создаём новый Recorder
-			w := httptest.NewRecorder()
-			handler.Update(w, request)
-
-			res := w.Result()
-			// проверяем код ответа
-			assert.Equal(t, test.want.code, res.StatusCode)
-			// получаем и проверяем тело запроса
-			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
+			res, err := req.Send()
 
 			require.NoError(t, err)
-			assert.Equal(t, test.want.response, string(resBody))
-			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+			assert.Equal(t, test.want.code, res.StatusCode())
+			assert.Equal(t, test.want.response, string(res.Body()))
+			assert.Equal(t, test.want.contentType, res.Header().Get("Content-type"))
 
 			// Проверка сохранения данных
 			if test.want.testStorage {
@@ -130,7 +133,6 @@ func TestUpdateHandler_update(t *testing.T) {
 
 				assert.Equal(t, tValue, sValue)
 			}
-
-		})
-	}
+        })
+    }
 }

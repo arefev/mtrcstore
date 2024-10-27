@@ -1,3 +1,5 @@
+build: server-build agent-build
+
 server: server-build server-run
 
 server-build:

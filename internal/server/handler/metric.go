@@ -41,7 +41,8 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := fmt.Sprintf("Type %s, Name %s, Value %f\n", mType, mName, value)
+	strVal := strconv.FormatFloat(value, 'f', -1, 64)
+	resp := fmt.Sprintf("%s\n", strVal)
 	w.Write([]byte(resp))
 }
 

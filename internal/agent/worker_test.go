@@ -13,7 +13,7 @@ func TestWorker_read(t *testing.T) {
 	storage := repository.NewMemory()
 	serverHost := "http://localhost:8080"
 	type fields struct {
-		ReportInterval float64
+		ReportInterval int
 		PollInterval   int
 		Storage        repository.Storage
 		ServerHost     string

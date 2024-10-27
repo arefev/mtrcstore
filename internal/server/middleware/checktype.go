@@ -11,7 +11,7 @@ func CheckType(next http.Handler) http.Handler {
 
 		mType := chi.URLParam(r, "type")
 		if mType != "counter" && mType != "gauge" {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 

@@ -23,7 +23,6 @@ func ParseFlags() Config {
 	f.IntVar(&cnf.ReportInterval, "r", 10, "report interval")
 	f.Parse(os.Args[1:])
 
-	// var cnf Config
 	err := env.Parse(&cnf)
 	if err != nil {
 		log.Fatal(err)

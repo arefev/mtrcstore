@@ -22,7 +22,7 @@ type Worker struct {
 }
 
 func (w *Worker) Run() {
-	var period float64
+	var period int
 	var memStats runtime.MemStats
 	start := time.Now()
 
@@ -32,10 +32,10 @@ func (w *Worker) Run() {
 
 		time.Sleep(time.Duration(w.PollInterval * int(time.Second)))
 
-		period = time.Until(start).Abs().Seconds()
+		period = int(time.Until(start).Abs().Seconds())
 
-		if int(period) >= w.ReportInterval {
-			log.Printf("Run report after %d seconds", int(period))
+		if period >= w.ReportInterval {
+			log.Printf("Run report after %d seconds", period)
 
 			w.report()
 			start = time.Now()
@@ -65,7 +65,7 @@ func (w *Worker) sendGauges() {
 	for name, val := range w.Storage.GetGauges() {
 		qPath := w.getReportUrl(mType, name, float64(val))
 		if _, err := http.Post(qPath, contentType, r); err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 			continue
 		}
 	}
@@ -78,7 +78,7 @@ func (w *Worker) sendCounters() {
 	for name, val := range w.Storage.GetCounters() {
 		qPath := w.getReportUrl(mType, name, float64(val))
 		if _, err := http.Post(qPath, contentType, r); err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 			continue
 		}
 	}

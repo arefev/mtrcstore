@@ -44,7 +44,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	html := service.MetricsHtml(h.Storage.Get())
+	html := service.MetricsHTML(h.Storage.Get())
 	w.Write([]byte(html))
 }
 

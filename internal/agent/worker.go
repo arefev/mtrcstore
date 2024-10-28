@@ -54,7 +54,7 @@ func (w *Worker) report() {
 	w.sendCounters()
 }
 
-func (w *Worker) getReportUrl(mType string, name string, val float64) string {
+func (w *Worker) getReportURL(mType string, name string, val float64) string {
 	return fmt.Sprintf("%s%s/update/%s/%s/%f", protocol, w.ServerHost, mType, name, val)
 }
 
@@ -63,11 +63,13 @@ func (w *Worker) sendGauges() {
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetGauges() {
-		qPath := w.getReportUrl(mType, name, float64(val))
-		if _, err := http.Post(qPath, contentType, r); err != nil {
+		qPath := w.getReportURL(mType, name, float64(val))
+		resp, err := http.Post(qPath, contentType, r)
+		if err != nil {
 			log.Fatal(err)
 			continue
 		}
+		resp.Body.Close()
 	}
 }
 
@@ -76,10 +78,12 @@ func (w *Worker) sendCounters() {
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetCounters() {
-		qPath := w.getReportUrl(mType, name, float64(val))
-		if _, err := http.Post(qPath, contentType, r); err != nil {
+		qPath := w.getReportURL(mType, name, float64(val))
+		resp, err := http.Post(qPath, contentType, r)
+		if err != nil {
 			log.Fatal(err)
 			continue
 		}
+		resp.Body.Close()
 	}
 }

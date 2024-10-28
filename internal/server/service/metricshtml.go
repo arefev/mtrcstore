@@ -2,7 +2,7 @@ package service
 
 import "fmt"
 
-func MetricsHtml(list map[string]float64) string {
+func MetricsHTML(list map[string]float64) string {
 	var html string
 	var li string
 	for name, val := range list {

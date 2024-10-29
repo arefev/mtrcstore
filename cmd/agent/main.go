@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	config := ParseFlags()
+	config := NewConfig()
 
 	storage := repository.NewMemory()
 	worker := agent.Worker{

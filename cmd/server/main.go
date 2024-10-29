@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	config := ParseFlags()
+	config := NewConfig()
 	if err := run(config); err != nil {
 		panic(err)
 	}

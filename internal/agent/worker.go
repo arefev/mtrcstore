@@ -11,8 +11,13 @@ import (
 	"github.com/arefev/mtrcstore/internal/agent/repository"
 )
 
-const contentType = "text/plain"
-const protocol = "http://"
+const (
+	contentType = "text/plain"
+	protocol = "http://"
+	updateUrlPath = "update"
+	counterName = "counter"
+	gaugeName = "gauge"
+)
 
 type Worker struct {
 	ReportInterval int
@@ -54,17 +59,12 @@ func (w *Worker) report() {
 	w.sendCounters()
 }
 
-func (w *Worker) getReportURL(mType string, name string, val float64) string {
-	return fmt.Sprintf("%s%s/update/%s/%s/%f", protocol, w.ServerHost, mType, name, val)
-}
-
 func (w *Worker) sendGauges() {
-	const mType = "gauge"
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetGauges() {
-		qPath := w.getReportURL(mType, name, float64(val))
-		resp, err := http.Post(qPath, contentType, r)
+		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, w.ServerHost, updateUrlPath, gaugeName, name, val)
+		resp, err := http.Post(url, contentType, r)
 		if err != nil {
 			log.Print(err)
 			continue
@@ -74,12 +74,11 @@ func (w *Worker) sendGauges() {
 }
 
 func (w *Worker) sendCounters() {
-	const mType = "counter"
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetCounters() {
-		qPath := w.getReportURL(mType, name, float64(val))
-		resp, err := http.Post(qPath, contentType, r)
+		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, w.ServerHost, updateUrlPath, counterName, name, val)
+		resp, err := http.Post(url, contentType, r)
 		if err != nil {
 			log.Print(err)
 			continue

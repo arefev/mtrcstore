@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	ADDRESS = "localhost:8080"
-	POLL_INTERVAL = 2
-	REPORT_INTERVAL = 10
+	Address = "localhost:8080"
+	PollInterval = 2
+	ReportInterval = 10
 )
 
 type Config struct {
@@ -23,9 +23,9 @@ func NewConfig() (Config, error) {
 	cnf := Config{}
 
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&cnf.Address, "a", ADDRESS, "server address and port")
-	f.IntVar(&cnf.PollInterval, "p", POLL_INTERVAL, "poll interval")
-	f.IntVar(&cnf.ReportInterval, "r", REPORT_INTERVAL, "report interval")
+	f.StringVar(&cnf.Address, "a", Address, "server address and port")
+	f.IntVar(&cnf.PollInterval, "p", PollInterval, "poll interval")
+	f.IntVar(&cnf.ReportInterval, "r", ReportInterval, "report interval")
 	f.Parse(os.Args[1:])
 
 	if err := env.Parse(&cnf); err != nil {

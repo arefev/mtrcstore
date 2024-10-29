@@ -7,7 +7,7 @@ import (
 	"github.com/caarlos0/env"
 )
 
-const ADDRESS = "localhost:8080"
+const Address = "localhost:8080"
 
 type Config struct {
 	Address string `env:"ADDRESS"`
@@ -16,7 +16,7 @@ type Config struct {
 func NewConfig() (Config, error) {
 	cnf := Config{}
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&cnf.Address, "a", ADDRESS, "address and port to run server")
+	f.StringVar(&cnf.Address, "a", Address, "address and port to run server")
 	f.Parse(os.Args[1:])
 
 	if err := env.Parse(&cnf); err != nil {

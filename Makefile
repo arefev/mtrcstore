@@ -1,20 +1,22 @@
+.PHONY: build server-build server server-run server-build agent agent-run agent-build
+
 build: server-build agent-build
 
-server: server-build server-run
+server: server-run
+
+server-run: server-build
+	./cmd/server/server
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/
 
-server-run:
-	./cmd/server/server
+agent: agent-run
 
-agent: agent-build agent-run
+agent-run: agent-build
+	./cmd/agent/agent
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/
-
-agent-run:
-	./cmd/agent/agent
 
 test-iter1:
 	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server

@@ -14,7 +14,7 @@ import (
 const (
 	contentType = "text/plain"
 	protocol = "http://"
-	updateUrlPath = "update"
+	updateURLPath = "update"
 	counterName = "counter"
 	gaugeName = "gauge"
 )
@@ -65,7 +65,7 @@ func (w *Worker) sendGauges() {
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetGauges() {
-		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, w.ServerHost, updateUrlPath, gaugeName, name, val)
+		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, w.ServerHost, updateURLPath, gaugeName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
 			log.Print(err)
@@ -79,7 +79,7 @@ func (w *Worker) sendCounters() {
 	r := bytes.NewReader([]byte(""))
 
 	for name, val := range w.Storage.GetCounters() {
-		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, w.ServerHost, updateUrlPath, counterName, name, val)
+		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, w.ServerHost, updateURLPath, counterName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
 			log.Print(err)

@@ -66,7 +66,7 @@ func (w *Worker) sendGauges() {
 		qPath := w.getReportURL(mType, name, float64(val))
 		resp, err := http.Post(qPath, contentType, r)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 			continue
 		}
 		resp.Body.Close()
@@ -81,7 +81,7 @@ func (w *Worker) sendCounters() {
 		qPath := w.getReportURL(mType, name, float64(val))
 		resp, err := http.Post(qPath, contentType, r)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 			continue
 		}
 		resp.Body.Close()

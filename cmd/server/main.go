@@ -14,9 +14,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if err := run(config); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

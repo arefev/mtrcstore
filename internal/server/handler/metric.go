@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"fmt"
+	// "fmt"
 	"net/http"
 	"strconv"
 
@@ -43,26 +43,22 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 	mName := chi.URLParam(r, "name")
 
-	var strVal string
+	check := func(str string, err error) {
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.Write([]byte(str))
+	}
+
 	switch mType {
 	case "counter":
 		value, err := h.Storage.FindCounter(mName)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		strVal = value.String()
+		check(value.String(), err)
 	default:
 		value, err := h.Storage.FindGauge(mName)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		strVal = value.String()
+		check(value.String(), err)
 	}
-
-	resp := fmt.Sprintf("%s\n", strVal)
-	w.Write([]byte(resp))
 }
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {

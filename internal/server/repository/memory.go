@@ -5,6 +5,12 @@ import "errors"
 type gauge float64
 type counter int64
 
+type Storage interface {
+	Save(mType string, name string, value float64) error
+	Find(mType string, name string) (float64, error)
+	Get() map[string]float64
+}
+
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter

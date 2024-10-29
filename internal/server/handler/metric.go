@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,7 +16,12 @@ type MetricHandlers struct {
 }
 
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	mType := chi.URLParam(r, "type")
+	mType, err := h.getType(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	mName := chi.URLParam(r, "name")
 	mValue, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
 
@@ -29,7 +35,12 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
-	mType := chi.URLParam(r, "type")
+	mType, err := h.getType(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	mName := chi.URLParam(r, "name")
 
 	value, err := h.Storage.Find(mType, mName)
@@ -48,3 +59,11 @@ func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html))
 }
 
+func (h *MetricHandlers) getType(r *http.Request) (string, error) {
+	t := chi.URLParam(r, "type")
+	if t != "counter" && t != "gauge" {
+		return "", errors.New("metric's type is invalid")
+	}
+
+	return t, nil
+}

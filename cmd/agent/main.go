@@ -8,9 +8,15 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	config, err := NewConfig()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	storage := repository.NewMemory()
@@ -27,5 +33,6 @@ func main() {
 		config.PollInterval,
 		config.ReportInterval,
 	)
-	worker.Run()
+
+	return worker.Run()
 }

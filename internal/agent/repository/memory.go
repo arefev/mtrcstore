@@ -8,6 +8,14 @@ import (
 type gauge float64
 type counter int64
 
+type Storage interface {
+	Save(memStats *runtime.MemStats) error
+	IncrementCounter()
+	ClearCounter()
+	GetGauges() map[string]gauge
+	GetCounters() map[string]counter
+}
+
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter

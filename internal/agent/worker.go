@@ -26,14 +26,16 @@ type Worker struct {
 	ServerHost     string
 }
 
-func (w *Worker) Run() {
+func (w *Worker) Run() error {
 	var period int
 	var memStats runtime.MemStats
 	start := time.Now()
 
 	for {
 		w.Storage.IncrementCounter()
-		w.read(&memStats)
+		if err := w.read(&memStats); err != nil {
+			return err
+		}
 
 		time.Sleep(time.Duration(w.PollInterval * int(time.Second)))
 
@@ -49,9 +51,9 @@ func (w *Worker) Run() {
 	}
 }
 
-func (w *Worker) read(memStats *runtime.MemStats) {
+func (w *Worker) read(memStats *runtime.MemStats) error {
 	runtime.ReadMemStats(memStats)
-	w.Storage.Save(memStats)
+	return w.Storage.Save(memStats)
 }
 
 func (w *Worker) report() {

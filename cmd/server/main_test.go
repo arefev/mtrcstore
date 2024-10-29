@@ -14,15 +14,6 @@ import (
 )
 
 func Test_main(t *testing.T) {
-	storage := repository.NewMemory()
-	handler := handler.MetricHandlers{
-		Storage: &storage,
-	}
-	
-	r := server.InitRouter(&handler)
-	srv := httptest.NewServer(r)
-	defer srv.Close()
-
 	type want struct {
 		urlPath      string
 		code         int
@@ -86,7 +77,7 @@ func Test_main(t *testing.T) {
 				testStorage:  true,
 				storageType:  "counter",
 				storageName:  "test",
-				storageValue: 2,
+				storageValue: 1,
 			},
 		},
 		{
@@ -106,6 +97,15 @@ func Test_main(t *testing.T) {
 
 	for _, test := range tests {
         t.Run(test.name, func(t *testing.T) {
+			storage := repository.NewMemory()
+			handler := handler.MetricHandlers{
+				Storage: &storage,
+			}
+			
+			r := server.InitRouter(&handler)
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
             // делаем запрос с помощью библиотеки resty к адресу запущенного сервера, 
             // который хранится в поле URL соответствующей структуры
 			req := resty.New().R()

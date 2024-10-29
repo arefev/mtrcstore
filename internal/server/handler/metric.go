@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	// "fmt"
 	"net/http"
 	"strconv"
@@ -55,15 +56,20 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	case "counter":
 		value, err := h.Storage.FindCounter(mName)
 		check(value.String(), err)
+		return
 	default:
 		value, err := h.Storage.FindGauge(mName)
 		check(value.String(), err)
+		return
 	}
 }
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	html := service.MetricsHTML(h.Storage.Get())
-	w.Write([]byte(html))
+	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (h *MetricHandlers) getType(r *http.Request) (string, error) {

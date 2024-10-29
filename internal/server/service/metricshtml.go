@@ -1,26 +1,50 @@
 package service
 
-import "fmt"
+import (
+	"html/template"
+	"io"
+	"log"
+)
 
-func MetricsHTML(list map[string]string) string {
-	var html string
-	var li string
-	for name, val := range list {
-		li += fmt.Sprintf("<li>%s: %s</li>", name, val)
+func ListHTML(w io.Writer, list map[string]string) error {
+	tpl := ListTpl()
+
+	data := struct {
+		Title string
+		Items map[string]string
+	}{
+		Title: "List of metrics",
+		Items: list,
 	}
 
-	html = fmt.Sprintf(`
+	if err := tpl.Execute(w, data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ListTpl() *template.Template {
+	tpl := `
 	<html lang="ru">
 		<head>
 			<meta charset="utf-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>Список метрик</title>
+			<title>{{.Title}}</title>
 		</head>
 		<body>
-			<ul>%s</ul>
+			<ul>
+				{{ range $key, $value := .Items }}
+				<li><strong>{{ $key }}</strong>: {{ $value }}</li>
+				{{ end }}
+			</ul>
 		</body>
 	</html>
-	`, li)
+	`
+	t, err := template.New("webpage").Parse(tpl)
+	if err != nil {
+		log.Print(err)
+	}
 
-	return html
+	return t
 }

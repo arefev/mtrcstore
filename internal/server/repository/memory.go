@@ -9,7 +9,7 @@ type gauge float64
 type counter int64
 
 func (g gauge) String() string {
-	return strconv.FormatFloat(float64(g), 'f', 3, 64)
+	return strconv.FormatFloat(float64(g), 'f', -1, 64)
 }
 
 func (c counter) String() string {

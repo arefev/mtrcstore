@@ -43,13 +43,24 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 	mName := chi.URLParam(r, "name")
 
-	value, err := h.Storage.Find(mType, mName)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
+	var strVal string
+	switch mType {
+	case "counter":
+		value, err := h.Storage.FindCounter(mName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		strVal = value.String()
+	default:
+		value, err := h.Storage.FindGauge(mName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		strVal = value.String()
 	}
 
-	strVal := strconv.FormatFloat(value, 'f', -1, 64)
 	resp := fmt.Sprintf("%s\n", strVal)
 	w.Write([]byte(resp))
 }

@@ -2,11 +2,11 @@ package service
 
 import "fmt"
 
-func MetricsHTML(list map[string]float64) string {
+func MetricsHTML(list map[string]string) string {
 	var html string
 	var li string
 	for name, val := range list {
-		li += fmt.Sprintf("<li>%s: %f</li>", name, val)
+		li += fmt.Sprintf("<li>%s: %s</li>", name, val)
 	}
 
 	html = fmt.Sprintf(`

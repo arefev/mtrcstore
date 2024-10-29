@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
-	config := NewConfig()
+	config, err := NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	storage := repository.NewMemory()
 	worker := agent.Worker{

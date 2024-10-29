@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 
 	"github.com/caarlos0/env"
@@ -20,7 +19,7 @@ type Config struct {
 	ReportInterval int `env:"REPORT_INTERVAL"`
 }
 
-func NewConfig() Config {
+func NewConfig() (Config, error) {
 	cnf := Config{}
 
 	f := flag.NewFlagSet("main", flag.ExitOnError)
@@ -29,10 +28,9 @@ func NewConfig() Config {
 	f.IntVar(&cnf.ReportInterval, "r", REPORT_INTERVAL, "report interval")
 	f.Parse(os.Args[1:])
 
-	err := env.Parse(&cnf)
-	if err != nil {
-		log.Fatal(err)
+	if err := env.Parse(&cnf); err != nil {
+		return Config{}, err
 	}
 
-	return cnf
+	return cnf, nil
 }

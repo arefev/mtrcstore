@@ -3,11 +3,13 @@ package service
 import (
 	"html/template"
 	"io"
-	"log"
 )
 
 func ListHTML(w io.Writer, list map[string]string) error {
-	tpl := ListTpl()
+	tpl, err := ListTpl()
+	if err != nil {
+		return err
+	}
 
 	data := struct {
 		Title string
@@ -24,7 +26,7 @@ func ListHTML(w io.Writer, list map[string]string) error {
 	return nil
 }
 
-func ListTpl() *template.Template {
+func ListTpl() (*template.Template, error) {
 	tpl := `
 	<html lang="ru">
 		<head>
@@ -43,8 +45,8 @@ func ListTpl() *template.Template {
 	`
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
-		log.Print(err)
+		return t, err
 	}
 
-	return t
+	return t, nil
 }

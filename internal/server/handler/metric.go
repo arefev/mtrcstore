@@ -66,7 +66,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
-		log.Println(err)
+		log.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

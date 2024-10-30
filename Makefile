@@ -1,6 +1,6 @@
 GOLANGCI_LINT_CACHE?=/tmp/praktikum-golangci-lint-cache
 
-.PHONY: build server-build server server-run server-build agent agent-run agent-build
+.PHONY: build server-build server server-run server-build agent agent-run agent-build gofmt
 
 build: server-build agent-build
 
@@ -19,6 +19,9 @@ agent-run: agent-build
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/
+
+gofmt:
+	gofmt -s -w ./
 
 test-iter1:
 	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server

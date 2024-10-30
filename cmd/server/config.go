@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -10,8 +9,6 @@ import (
 )
 
 const Address = "localhost:8080"
-
-var errParseEnv = errors.New("parse envs fail")
 
 type Config struct {
 	Address string `env:"ADDRESS"`
@@ -24,7 +21,7 @@ func NewConfig() (Config, error) {
 	f.Parse(os.Args[1:])
 
 	if err := env.Parse(&cnf); err != nil {
-		return Config{}, fmt.Errorf("%w", errParseEnv)
+		return Config{}, fmt.Errorf("NewConfig: parse envs fail: %w", err)
 	}
 
 	return cnf, nil

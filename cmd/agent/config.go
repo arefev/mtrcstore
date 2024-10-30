@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -14,8 +13,6 @@ const (
 	PollInterval = 2
 	ReportInterval = 10
 )
-
-var errParseEnv = errors.New("parse envs fail")
 
 type Config struct {
 	Address string `env:"ADDRESS"`
@@ -32,8 +29,8 @@ func NewConfig() (Config, error) {
 	f.IntVar(&cnf.ReportInterval, "r", ReportInterval, "report interval")
 	f.Parse(os.Args[1:])
 
-	if err := env.Parse(&cnf); err != nil {
-		return Config{}, fmt.Errorf("%w", errParseEnv)
+	if err := env.Parse(cnf); err != nil {
+		return Config{}, fmt.Errorf("NewConfig: parse envs fail: %w", err)
 	}
 
 	return cnf, nil

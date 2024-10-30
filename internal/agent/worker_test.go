@@ -25,7 +25,7 @@ func TestWorker_read(t *testing.T) {
 			name: "positive test №1",
 			fields: fields{
 				ReportInterval: 2,
-				PollInterval:  0,
+				PollInterval:   0,
 			},
 			args: args{
 				memStats: &runtime.MemStats{},
@@ -34,7 +34,6 @@ func TestWorker_read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			storage := repository.NewMemory()
 			serverHost := "http://localhost:8080"
 
@@ -44,7 +43,7 @@ func TestWorker_read(t *testing.T) {
 				Storage:        &storage,
 				ServerHost:     serverHost,
 			}
-			w.read(tt.args.memStats)
+			assert.NoError(t, w.read(tt.args.memStats))
 			w.Storage.IncrementCounter()
 
 			assert.Contains(t, w.Storage.GetGauges(), "Alloc")

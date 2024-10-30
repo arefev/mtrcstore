@@ -32,8 +32,17 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.Storage.Save(mType, mName, mValue)
-	w.Write([]byte("Metrics are updated!"))
+	if err := h.Storage.Save(mType, mName, mValue); err != nil {
+		log.Printf("handler Update metrics: data save failed: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write([]byte("Metrics are updated!")); err != nil {
+		log.Printf("handler Update metrics: response writer failed: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +61,12 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		w.Write([]byte(str))
+		
+		if _, err := w.Write([]byte(str)); err != nil {
+			log.Printf("handler Find metrics: response writer failed: %s", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 	}
 
 	switch mType {

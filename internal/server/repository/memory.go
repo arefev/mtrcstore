@@ -29,7 +29,6 @@ func NewMemory() memory {
 }
 
 func (s *memory) Save(mType string, name string, value float64) error {
-
 	switch mType {
 	case "counter":
 		s.Counter[name] += counter(value)

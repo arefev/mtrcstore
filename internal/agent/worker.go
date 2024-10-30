@@ -53,7 +53,7 @@ func (w *Worker) Run() error {
 
 func (w *Worker) read(memStats *runtime.MemStats) error {
 	runtime.ReadMemStats(memStats)
-	return w.Storage.Save(memStats)
+	return fmt.Errorf("worker read(): metrics save failed: %w", w.Storage.Save(memStats))
 }
 
 func (w *Worker) report() {
@@ -68,10 +68,14 @@ func (w *Worker) sendGauges() {
 		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, w.ServerHost, updateURLPath, gaugeName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
-			log.Printf("failed to send the gauge metric %s: %s", gaugeName, err.Error())
+			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
-		resp.Body.Close()
+		
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("sendGauges(): body close failed %s: %s", gaugeName, err.Error())
+			continue
+		}
 	}
 }
 
@@ -82,9 +86,13 @@ func (w *Worker) sendCounters() {
 		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, w.ServerHost, updateURLPath, counterName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
-			log.Printf("failed to send the counter metric %s: %s", counterName, err.Error())
+			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
 		}
-		resp.Body.Close()
+
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("sendCounters(): body close failed %s: %s", counterName, err.Error())
+			continue
+		}
 	}
 }

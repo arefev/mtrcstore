@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 )
@@ -12,15 +13,15 @@ func ListHTML(w io.Writer, list map[string]string) error {
 	}
 
 	data := struct {
-		Title string
 		Items map[string]string
+		Title string
 	}{
-		Title: "List of metrics",
 		Items: list,
+		Title: "List of metrics",
 	}
 
 	if err := tpl.Execute(w, data); err != nil {
-		return err
+		return fmt.Errorf("ListHtml template execute failed: %w", err)
 	}
 
 	return nil
@@ -45,7 +46,7 @@ func ListTpl() (*template.Template, error) {
 	`
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
-		return t, err
+		return t, fmt.Errorf("ListTpl template parse failed: %w", err)
 	}
 
 	return t, nil

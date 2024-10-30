@@ -53,7 +53,11 @@ func (w *Worker) Run() error {
 
 func (w *Worker) read(memStats *runtime.MemStats) error {
 	runtime.ReadMemStats(memStats)
-	return fmt.Errorf("worker read(): metrics save failed: %w", w.Storage.Save(memStats))
+	if err := w.Storage.Save(memStats); err != nil {
+		return fmt.Errorf("worker read(): metrics save failed: %w", err)
+	}
+
+	return nil
 }
 
 func (w *Worker) report() {

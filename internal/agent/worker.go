@@ -34,7 +34,7 @@ func (w *Worker) Run() error {
 	for {
 		w.Storage.IncrementCounter()
 		if err := w.read(&memStats); err != nil {
-			return err
+			return fmt.Errorf("Worker Run() failed: %w", err)
 		}
 
 		time.Sleep(time.Duration(w.PollInterval * int(time.Second)))

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -40,5 +41,5 @@ func run() error {
 		config.ReportInterval,
 	)
 
-	return worker.Run()
+	return fmt.Errorf("main run() failed: %w", worker.Run())
 }

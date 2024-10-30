@@ -98,11 +98,11 @@ func Test_main(t *testing.T) {
 	for _, test := range tests {
         t.Run(test.name, func(t *testing.T) {
 			storage := repository.NewMemory()
-			handler := handler.MetricHandlers{
+			metricHandlers := handler.MetricHandlers{
 				Storage: &storage,
 			}
 			
-			r := server.InitRouter(&handler)
+			r := server.InitRouter(&metricHandlers)
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 

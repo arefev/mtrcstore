@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,5 +36,5 @@ func run() error {
 	r := server.InitRouter(&metricHandlers)
 
 	log.Printf("Server up on address %s\n", config.Address)
-	return http.ListenAndServe(config.Address, r)
+	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }

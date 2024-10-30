@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
@@ -16,8 +17,13 @@ func main() {
 }
 
 func run() error {
-	config, err := NewConfig()
-	if err != nil {
+	config := NewConfig()
+
+	if err := config.InitFlags(os.Args[1:]); err != nil {
+		return err
+	}
+
+	if err := config.InitEnvs(); err != nil {
 		return err
 	}
 

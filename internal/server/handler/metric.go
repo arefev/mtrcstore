@@ -18,6 +18,7 @@ type MetricHandlers struct {
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
+		log.Printf("handler Update metrics fail: %s", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -26,6 +27,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	mValue, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
 
 	if err != nil {
+		log.Printf("handler Update metrics fail: %s", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -37,6 +39,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
+		log.Printf("handler Find metric fail: %s", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -45,6 +48,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 	check := func(str string, err error) {
 		if err != nil {
+			log.Printf("handler Find metric fail: %s", err.Error())
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -65,7 +69,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
-		log.Print(err)
+		log.Printf("handler Get fail: %s", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

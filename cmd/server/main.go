@@ -28,11 +28,11 @@ func run() error {
 	}
 
 	storage := repository.NewMemory()
-	handler := handler.MetricHandlers{
+	metricHandlers := handler.MetricHandlers{
 		Storage: &storage,
 	}
 
-	r := server.InitRouter(&handler)
+	r := server.InitRouter(&metricHandlers)
 
 	log.Printf("Server up on address %s\n", config.Address)
 	return http.ListenAndServe(config.Address, r)

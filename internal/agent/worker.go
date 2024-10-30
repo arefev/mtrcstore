@@ -20,10 +20,10 @@ const (
 )
 
 type Worker struct {
-	ReportInterval int
-	PollInterval   int
 	Storage        repository.Storage
 	ServerHost     string
+	PollInterval   int
+	ReportInterval int
 }
 
 func (w *Worker) Run() error {

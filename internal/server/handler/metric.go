@@ -61,7 +61,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		
+
 		if _, err := w.Write([]byte(str)); err != nil {
 			log.Printf("handler Find metrics: response writer failed: %s", err.Error())
 			w.WriteHeader(http.StatusBadRequest)

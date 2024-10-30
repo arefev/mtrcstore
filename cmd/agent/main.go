@@ -17,7 +17,7 @@ func main() {
 
 func run() error {
 	config := NewConfig()
-	
+
 	if err := config.InitFlags(os.Args[1:]); err != nil {
 		return err
 	}

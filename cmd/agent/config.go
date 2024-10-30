@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	Address = "localhost:8080"
-	PollInterval = 2
+	Address        = "localhost:8080"
+	PollInterval   = 2
 	ReportInterval = 10
 )
 
 type Config struct {
-	Address string `env:"ADDRESS"`
-	PollInterval int `env:"POLL_INTERVAL"`
-	ReportInterval int `env:"REPORT_INTERVAL"`
+	Address        string `env:"ADDRESS"`
+	PollInterval   int    `env:"POLL_INTERVAL"`
+	ReportInterval int    `env:"REPORT_INTERVAL"`
 }
 
 func NewConfig() Config {
@@ -42,5 +42,3 @@ func (cnf *Config) InitEnvs() error {
 
 	return nil
 }
-
-

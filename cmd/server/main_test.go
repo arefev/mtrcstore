@@ -96,21 +96,21 @@ func Test_main(t *testing.T) {
 	}
 
 	for _, test := range tests {
-        t.Run(test.name, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			storage := repository.NewMemory()
 			metricHandlers := handler.MetricHandlers{
 				Storage: &storage,
 			}
-			
+
 			r := server.InitRouter(&metricHandlers)
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
-            // делаем запрос с помощью библиотеки resty к адресу запущенного сервера, 
-            // который хранится в поле URL соответствующей структуры
+			// делаем запрос с помощью библиотеки resty к адресу запущенного сервера,
+			// который хранится в поле URL соответствующей структуры
 			req := resty.New().R()
-            req.Method = http.MethodPost
-            req.URL = srv.URL + test.want.urlPath
+			req.Method = http.MethodPost
+			req.URL = srv.URL + test.want.urlPath
 
 			res, err := req.Send()
 
@@ -133,6 +133,6 @@ func Test_main(t *testing.T) {
 
 				assert.Equal(t, tValue, sValue)
 			}
-        })
-    }
+		})
+	}
 }

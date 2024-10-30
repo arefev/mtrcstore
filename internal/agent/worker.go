@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	contentType = "text/plain"
-	protocol = "http://"
+	contentType   = "text/plain"
+	protocol      = "http://"
 	updateURLPath = "update"
-	counterName = "counter"
-	gaugeName = "gauge"
+	counterName   = "counter"
+	gaugeName     = "gauge"
 )
 
 type Worker struct {
@@ -71,7 +71,7 @@ func (w *Worker) sendGauges() {
 			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
-		
+
 		if err := resp.Body.Close(); err != nil {
 			log.Printf("sendGauges(): body close failed %s: %s", gaugeName, err.Error())
 			continue

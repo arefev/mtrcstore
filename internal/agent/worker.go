@@ -68,7 +68,7 @@ func (w *Worker) sendGauges() {
 		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, w.ServerHost, updateURLPath, gaugeName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
-			log.Print(err)
+			log.Printf("failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
 		resp.Body.Close()
@@ -82,7 +82,7 @@ func (w *Worker) sendCounters() {
 		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, w.ServerHost, updateURLPath, counterName, name, val)
 		resp, err := http.Post(url, contentType, r)
 		if err != nil {
-			log.Print(err)
+			log.Printf("failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
 		}
 		resp.Body.Close()

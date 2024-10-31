@@ -18,14 +18,10 @@ func main() {
 }
 
 func run() error {
-	config := NewConfig()
+	config, err := NewConfig(os.Args[1:])
 
-	if err := config.InitFlags(os.Args[1:]); err != nil {
-		return err
-	}
-
-	if err := config.InitEnvs(); err != nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("main config init failed: %w", err)
 	}
 
 	storage := repository.NewMemory()

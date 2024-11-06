@@ -7,6 +7,7 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/agent"
 	"github.com/arefev/mtrcstore/internal/agent/repository"
+	"github.com/arefev/mtrcstore/internal/agent/service"
 )
 
 func main() {
@@ -23,11 +24,11 @@ func run() error {
 	}
 
 	storage := repository.NewMemory()
+	report := service.NewReport(&storage, config.Address)
 	worker := agent.Worker{
+		Report:         &report,
 		PollInterval:   config.PollInterval,
 		ReportInterval: config.ReportInterval,
-		Storage:        &storage,
-		ServerHost:     config.Address,
 	}
 
 	log.Printf(

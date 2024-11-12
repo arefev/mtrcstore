@@ -100,11 +100,6 @@ func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *MetricHandlers) getType(r *http.Request) (string, error) {
-	t := chi.URLParam(r, "type")
-	return t, h.checkType(t)
-}
-
 func (h *MetricHandlers) checkType(t string) error {
 	if t != "counter" && t != "gauge" {
 		return errors.New("metric's type is invalid")

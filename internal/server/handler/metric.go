@@ -38,8 +38,6 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	logger.Log.Sugar().Debugf("model has struct %v", model)
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {

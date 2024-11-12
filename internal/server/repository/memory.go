@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
@@ -33,8 +34,15 @@ func NewMemory() memory {
 func (s *memory) Save(m model.Metric) error {
 	switch m.MType {
 	case "counter":
+		if m.Delta == nil {
+			return fmt.Errorf("counter has not value")
+		}
 		s.Counter[m.ID] += counter(*m.Delta)
 	default:
+		if m.Value == nil {
+			return fmt.Errorf("gauge has not value")
+		}
+
 		s.Gauge[m.ID] = gauge(*m.Value)
 	}
 

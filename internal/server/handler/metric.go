@@ -10,7 +10,6 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/service"
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 

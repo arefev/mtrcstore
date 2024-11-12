@@ -8,6 +8,7 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 )
 
@@ -22,6 +23,10 @@ func run() error {
 
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
+	}
+
+	if err := logger.Init(config.LogLevel); err != nil {
+		return fmt.Errorf("logger init failed: %w", err)
 	}
 
 	storage := repository.NewMemory()

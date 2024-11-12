@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 func InitRouter(h *handler.MetricHandlers) *chi.Mux {

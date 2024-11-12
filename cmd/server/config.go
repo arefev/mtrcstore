@@ -11,7 +11,7 @@ const Address = "localhost:8080"
 const LogLevel = "info"
 
 type Config struct {
-	Address string `env:"ADDRESS"`
+	Address  string `env:"ADDRESS"`
 	LogLevel string `env:"LOG_LEVEL"`
 }
 

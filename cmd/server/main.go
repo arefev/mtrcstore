@@ -37,5 +37,6 @@ func run() error {
 	r := server.InitRouter(&metricHandlers)
 
 	log.Printf("Server up on address %s\n", config.Address)
+	log.Printf("Log level %s\n", config.LogLevel)
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }

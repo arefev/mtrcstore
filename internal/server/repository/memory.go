@@ -3,6 +3,8 @@ package repository
 import (
 	"errors"
 	"strconv"
+
+	"github.com/arefev/mtrcstore/internal/server/model"
 )
 
 type gauge float64
@@ -28,12 +30,12 @@ func NewMemory() memory {
 	}
 }
 
-func (s *memory) Save(mType string, name string, value float64) error {
-	switch mType {
+func (s *memory) Save(m model.Metric) error {
+	switch m.MType {
 	case "counter":
-		s.Counter[name] += counter(value)
+		s.Counter[m.ID] += counter(*m.Delta)
 	default:
-		s.Gauge[name] = gauge(value)
+		s.Gauge[m.ID] = gauge(*m.Value)
 	}
 
 	return nil

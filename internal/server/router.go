@@ -12,7 +12,7 @@ func InitRouter(h *handler.MetricHandlers) *chi.Mux {
 
 	r.Get("/", h.Get)
 	r.Get("/value/{type}/{name}", h.Find)
-	r.Post("/update/{type}/{name}/{value}", h.Update)
+	r.Post("/update", h.Update)
 
 	return r
 }

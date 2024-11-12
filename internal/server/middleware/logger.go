@@ -23,8 +23,13 @@ type (
 
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
+
+	if err != nil {
+		return size, fmt.Errorf("loggingResponseWriter Write: %w", err)
+	}
+
 	r.responseData.size += size
-	return size, fmt.Errorf("loggingResponseWriter Write: %w", err)
+	return size, nil
 }
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {

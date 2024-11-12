@@ -1,14 +1,17 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 
+	"github.com/arefev/mtrcstore/internal/server/logger"
+	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/service"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 type MetricHandlers struct {
@@ -16,33 +19,27 @@ type MetricHandlers struct {
 }
 
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	mType, err := h.getType(r)
-	if err != nil {
-		log.Printf("handler Update metrics fail: %s", err.Error())
+	var model model.Metric
+	json := json.NewDecoder(r.Body)
+	if err := json.Decode(&model); err != nil {
+		logger.Log.Error("handler Update metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	mName := chi.URLParam(r, "name")
-	mValue, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
-
-	if err != nil {
-		log.Printf("handler Update metrics fail: %s", err.Error())
+	if err := h.checkType(model.MType); err != nil {
+		logger.Log.Error("handler Update metrics fail", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Storage.Save(mType, mName, mValue); err != nil {
-		log.Printf("handler Update metrics: data save failed: %s", err.Error())
+	if err := h.Storage.Save(model); err != nil {
+		logger.Log.Error("handler Update metrics: data save failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if _, err := w.Write([]byte("Metrics are updated!")); err != nil {
-		log.Printf("handler Update metrics: response writer failed: %s", err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	logger.Log.Sugar().Debugf("model has struct %v", model)
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
@@ -91,9 +88,13 @@ func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *MetricHandlers) getType(r *http.Request) (string, error) {
 	t := chi.URLParam(r, "type")
+	return t, h.checkType(t)
+}
+
+func (h *MetricHandlers) checkType(t string) error {
 	if t != "counter" && t != "gauge" {
-		return "", errors.New("metric's type is invalid")
+		return errors.New("metric's type is invalid")
 	}
 
-	return t, nil
+	return nil
 }

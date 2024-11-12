@@ -49,22 +49,36 @@ func (s *memory) Save(m model.Metric) error {
 	return nil
 }
 
-func (s *memory) FindGauge(name string) (gauge, error) {
+func (s *memory) FindGauge(name string) (model.Metric, error) {
 	val, ok := s.Gauge[name]
 	if !ok {
-		return 0, errors.New("gauge value not found")
+		return model.Metric{}, errors.New("gauge value not found")
 	}
 
-	return val, nil
+	value := float64(val)
+	model := model.Metric{
+		ID: name,
+		MType: "gauge",
+		Value: &value,
+	}
+
+	return model, nil
 }
 
-func (s *memory) FindCounter(name string) (counter, error) {
+func (s *memory) FindCounter(name string) (model.Metric, error) {
 	val, ok := s.Counter[name]
 	if !ok {
-		return 0, errors.New("counter value not found")
+		return model.Metric{}, errors.New("counter value not found")
 	}
 
-	return val, nil
+	value := int64(val)
+	model := model.Metric{
+		ID: name,
+		MType: "counter",
+		Delta: &value,
+	}
+
+	return model, nil
 }
 
 func (s *memory) Get() map[string]string {

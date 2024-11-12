@@ -20,8 +20,9 @@ type MetricHandlers struct {
 
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	var model model.Metric
-	json := json.NewDecoder(r.Body)
-	if err := json.Decode(&model); err != nil {
+	data := json.NewDecoder(r.Body)
+	
+	if err := data.Decode(&model); err != nil {
 		logger.Log.Error("handler Update metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -38,40 +39,55 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	resp := json.NewEncoder(w)
+	if err := resp.Encode(model); err != nil {
+		logger.Log.Error("handler Update metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
-	mType, err := h.getType(r)
-	if err != nil {
-		log.Printf("handler Find metric fail: %s", err.Error())
+	var metric model.Metric
+	data := json.NewDecoder(r.Body)
+	
+	if err := data.Decode(&metric); err != nil {
+		logger.Log.Error("handler Find metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	mName := chi.URLParam(r, "name")
+	if err := h.checkType(metric.MType); err != nil {
+		logger.Log.Error("handler Find metrics fail", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	check := func(str string, err error) {
+
+	check := func(metric *model.Metric, err error) {
 		if err != nil {
 			log.Printf("handler Find metric fail: %s", err.Error())
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		if _, err := w.Write([]byte(str)); err != nil {
-			log.Printf("handler Find metrics: response writer failed: %s", err.Error())
+		resp := json.NewEncoder(w)
+		if err := resp.Encode(metric); err != nil {
+			logger.Log.Error("handler Find metrics: response writer failed", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
 
-	switch mType {
+	switch metric.MType {
 	case "counter":
-		value, err := h.Storage.FindCounter(mName)
-		check(value.String(), err)
+		value, err := h.Storage.FindCounter(metric.ID)
+		check(&value, err)
 		return
 	default:
-		value, err := h.Storage.FindGauge(mName)
-		check(value.String(), err)
+		value, err := h.Storage.FindGauge(metric.ID)
+		check(&value, err)
 		return
 	}
 }

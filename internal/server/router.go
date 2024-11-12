@@ -11,7 +11,7 @@ func InitRouter(h *handler.MetricHandlers) *chi.Mux {
 	r.Use(middleware.Logger)
 
 	r.Get("/", h.Get)
-	r.Get("/value/{type}/{name}", h.Find)
+	r.Post("/value", h.Find)
 	r.Post("/update", h.Update)
 
 	return r

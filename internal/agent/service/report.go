@@ -1,11 +1,12 @@
 package service
 
 import (
-	"bytes"
 	"fmt"
 	"log"
-	"net/http"
 	"runtime"
+
+	"github.com/arefev/mtrcstore/internal/agent/model"
+	"github.com/go-resty/resty/v2"
 )
 
 type Gauge float64
@@ -58,37 +59,45 @@ func (r *Report) IncrementCounter() {
 }
 
 func (r *Report) sendGauges() {
-	reader := bytes.NewReader([]byte(""))
+	client := resty.New()
+	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
 
 	for name, val := range r.Storage.GetGauges() {
-		url := fmt.Sprintf("%s%s/%s/%s/%s/%f", protocol, r.ServerHost, updateURLPath, gaugeName, name, val)
-		resp, err := http.Post(url, contentType, reader)
+
+		mVal := float64(val)
+		metric := model.Metric{
+			ID:    name,
+			MType: gaugeName,
+			Value: &mVal,
+		}
+		_, err := client.R().SetBody(metric).Post(url)
+
 		if err != nil {
 			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
 
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("sendGauges(): body close failed %s: %s", gaugeName, err.Error())
-			continue
-		}
 	}
 }
 
 func (r *Report) sendCounters() {
-	reader := bytes.NewReader([]byte(""))
+	client := resty.New()
+	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
 
 	for name, val := range r.Storage.GetCounters() {
-		url := fmt.Sprintf("%s%s/%s/%s/%s/%d", protocol, r.ServerHost, updateURLPath, counterName, name, val)
-		resp, err := http.Post(url, contentType, reader)
+
+		mVal := int64(val)
+		metric := model.Metric{
+			ID:    name,
+			MType: counterName,
+			Delta: &mVal,
+		}
+		_, err := client.R().SetBody(metric).Post(url)
+
 		if err != nil {
 			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
 		}
 
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("sendCounters(): body close failed %s: %s", counterName, err.Error())
-			continue
-		}
 	}
 }

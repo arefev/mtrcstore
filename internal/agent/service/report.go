@@ -31,12 +31,18 @@ type Storage interface {
 type Report struct {
 	Storage    Storage
 	ServerHost string
+	updateUrl  string
+	client     resty.Client
 }
 
 func NewReport(s Storage, host string) Report {
+	url := fmt.Sprintf("%s%s/%s", protocol, host, updateURLPath)
+	client := resty.New()
 	return Report{
 		Storage:    s,
 		ServerHost: host,
+		updateUrl: url,
+		client: *client,
 	}
 }
 
@@ -59,9 +65,6 @@ func (r *Report) IncrementCounter() {
 }
 
 func (r *Report) sendGauges() {
-	client := resty.New()
-	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
-
 	for name, val := range r.Storage.GetGauges() {
 		mVal := float64(val)
 		metric := model.Metric{
@@ -69,9 +72,8 @@ func (r *Report) sendGauges() {
 			MType: gaugeName,
 			Value: &mVal,
 		}
-		_, err := client.R().SetBody(metric).Post(url)
 
-		if err != nil {
+		if err := r.send(&metric); err != nil {
 			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
@@ -79,9 +81,6 @@ func (r *Report) sendGauges() {
 }
 
 func (r *Report) sendCounters() {
-	client := resty.New()
-	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
-
 	for name, val := range r.Storage.GetCounters() {
 		mVal := int64(val)
 		metric := model.Metric{
@@ -89,11 +88,29 @@ func (r *Report) sendCounters() {
 			MType: counterName,
 			Delta: &mVal,
 		}
-		_, err := client.R().SetBody(metric).Post(url)
-
-		if err != nil {
+		
+		if err := r.send(&metric); err != nil {
 			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
 		}
 	}
+}
+
+func (r *Report) send(m *model.Metric) error {
+	var err error
+	body, err := m.ToJSON()
+	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	_, err = r.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		Post(r.updateUrl)
+
+	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	return nil
 }

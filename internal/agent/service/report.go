@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io"
 	"log"
 	"runtime"
 
@@ -99,15 +100,13 @@ func (r *Report) sendCounters() {
 }
 
 func (r *Report) send(m *model.Metric) error {
-	var err error
 	jsonBody, err := m.ToJSON()
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
 
-	body := bytes.NewBuffer(nil)
-	w := gzip.NewWriter(body)
-	if _, err = w.Write([]byte(jsonBody)); err != nil {
+	body, err := r.gzip(jsonBody)
+	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
 
@@ -122,4 +121,19 @@ func (r *Report) send(m *model.Metric) error {
 	}
 
 	return nil
+}
+
+func (r *Report) gzip(s string) (io.Writer, error) {
+	var err error
+	body := bytes.NewBuffer(nil)
+	w := gzip.NewWriter(body)
+	if _, err = w.Write([]byte(s)); err != nil {
+		return body, fmt.Errorf("gzip failed: %w", err)
+	}
+
+	if err := w.Close(); err != nil {
+		return body, fmt.Errorf("gzip failed: %w", err)
+	}
+
+	return body, nil
 }

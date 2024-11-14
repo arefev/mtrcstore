@@ -47,7 +47,7 @@ func (s *memory) Save(memStats *runtime.MemStats) error {
 	s.Gauge["StackSys"] = service.Gauge(memStats.StackSys)
 	s.Gauge["Sys"] = service.Gauge(memStats.Sys)
 	s.Gauge["TotalAlloc"] = service.Gauge(memStats.TotalAlloc)
-	s.Gauge["RandomValues"] = service.Gauge(rand.Int())
+	s.Gauge["RandomValue"] = service.Gauge(rand.Int())
 	return nil
 }
 

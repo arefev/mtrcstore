@@ -37,7 +37,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 
 	ival := int64(mValue)
 	metric := model.Metric{
-		ID: mName,
+		ID:    mName,
 		MType: mType,
 		Value: &mValue,
 		Delta: &ival,
@@ -66,14 +66,22 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 	mName := r.PathValue("name")
 
-	check := func(str string, err error) {
+	check := func(m model.Metric, mType string, err error) {
+		var value string
 		if err != nil {
 			log.Printf("handler Find metric fail: %s", err.Error())
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		if _, err := w.Write([]byte(str)); err != nil {
+		switch mType {
+		case repository.CounterName:
+			value = m.DeltaString()
+		default:
+			value = m.ValueString()
+		}
+
+		if _, err := w.Write([]byte(value)); err != nil {
 			log.Printf("handler Find metrics: response writer failed: %s", err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -81,51 +89,55 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch mType {
-	case "counter":
+	case repository.CounterName:
 		m, err := h.Storage.FindCounter(mName)
-		check(m.DeltaString(), err)
+		check(m, mType, err)
 		return
 	default:
 		m, err := h.Storage.FindGauge(mName)
-		check(m.ValueString(), err)
+		check(m, mType, err)
 		return
 	}
 }
 
-func (h *MetricHandlers) UpdateJson(w http.ResponseWriter, r *http.Request) {
-	var model model.Metric
+func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
+	var metric model.Metric
 	data := json.NewDecoder(r.Body)
-	
-	if err := data.Decode(&model); err != nil {
+
+	w.Header().Add("Content-type", "application/json")
+
+	if err := data.Decode(&metric); err != nil {
 		logger.Log.Error("handler UpdateJson metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := h.checkType(model.MType); err != nil {
+	if err := h.checkType(metric.MType); err != nil {
 		logger.Log.Error("handler UpdateJson metrics fail", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Storage.Save(model); err != nil {
+	if err := h.Storage.Save(metric); err != nil {
 		logger.Log.Error("handler UpdateJson metrics: data save failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	resp := json.NewEncoder(w)
-	if err := resp.Encode(model); err != nil {
+	if err := resp.Encode(metric); err != nil {
 		logger.Log.Error("handler UpdateJson metrics: response writer failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }
 
-func (h *MetricHandlers) FindJson(w http.ResponseWriter, r *http.Request) {
+func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	var metric model.Metric
 	data := json.NewDecoder(r.Body)
-	
+
+	w.Header().Add("Content-type", "application/json")
+
 	if err := data.Decode(&metric); err != nil {
 		logger.Log.Error("handler FindJson metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -137,7 +149,6 @@ func (h *MetricHandlers) FindJson(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 
 	check := func(metric *model.Metric, err error) {
 		if err != nil {
@@ -155,7 +166,7 @@ func (h *MetricHandlers) FindJson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch metric.MType {
-	case "counter":
+	case repository.CounterName:
 		value, err := h.Storage.FindCounter(metric.ID)
 		check(&value, err)
 		return
@@ -180,7 +191,7 @@ func (h *MetricHandlers) getType(r *http.Request) (string, error) {
 }
 
 func (h *MetricHandlers) checkType(t string) error {
-	if t != "counter" && t != "gauge" {
+	if t != repository.CounterName && t != repository.GaugeName {
 		return errors.New("metric's type is invalid")
 	}
 

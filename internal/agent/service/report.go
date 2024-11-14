@@ -63,7 +63,6 @@ func (r *Report) sendGauges() {
 	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
 
 	for name, val := range r.Storage.GetGauges() {
-
 		mVal := float64(val)
 		metric := model.Metric{
 			ID:    name,
@@ -76,7 +75,6 @@ func (r *Report) sendGauges() {
 			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
 			continue
 		}
-
 	}
 }
 
@@ -85,7 +83,6 @@ func (r *Report) sendCounters() {
 	url := fmt.Sprintf("%s%s/%s", protocol, r.ServerHost, updateURLPath)
 
 	for name, val := range r.Storage.GetCounters() {
-
 		mVal := int64(val)
 		metric := model.Metric{
 			ID:    name,
@@ -98,6 +95,5 @@ func (r *Report) sendCounters() {
 			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
 		}
-
 	}
 }

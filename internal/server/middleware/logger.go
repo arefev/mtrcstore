@@ -53,6 +53,7 @@ func Logger(next http.Handler) http.Handler {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
+
 		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)

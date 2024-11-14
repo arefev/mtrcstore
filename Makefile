@@ -47,6 +47,10 @@ test-iter5:
 test-iter6:
 	metricstest -test.v -test.run=^TestIteration6$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server -source-path=/home/arefev/dev/study/golang/mtrcstore -server-port=8080
 
+test-iter7:
+	metricstest -test.v -test.run=^TestIteration7$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server -source-path=/home/arefev/dev/study/golang/mtrcstore -server-port=8080
+
+
 .PHONY: golangci-lint-run
 golangci-lint-run: _golangci-lint-rm-unformatted-report
 

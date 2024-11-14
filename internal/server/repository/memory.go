@@ -8,6 +8,11 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/model"
 )
 
+const (
+	CounterName = "counter"
+	GaugeName   = "gauge"
+)
+
 type gauge float64
 type counter int64
 
@@ -35,12 +40,12 @@ func (s *memory) Save(m model.Metric) error {
 	switch m.MType {
 	case "counter":
 		if m.Delta == nil {
-			return fmt.Errorf("counter has not value")
+			return errors.New("counter has not value")
 		}
 		s.Counter[m.ID] += counter(*m.Delta)
 	default:
 		if m.Value == nil {
-			return fmt.Errorf("gauge has not value")
+			return errors.New("gauge has not value")
 		}
 
 		s.Gauge[m.ID] = gauge(*m.Value)
@@ -52,33 +57,33 @@ func (s *memory) Save(m model.Metric) error {
 func (s *memory) FindGauge(name string) (model.Metric, error) {
 	val, ok := s.Gauge[name]
 	if !ok {
-		return model.Metric{}, errors.New("gauge value not found")
+		return model.Metric{}, fmt.Errorf("gauge with name %s not found", name)
 	}
 
 	value := float64(val)
-	model := model.Metric{
-		ID: name,
+	metric := model.Metric{
+		ID:    name,
 		MType: "gauge",
 		Value: &value,
 	}
 
-	return model, nil
+	return metric, nil
 }
 
 func (s *memory) FindCounter(name string) (model.Metric, error) {
 	val, ok := s.Counter[name]
 	if !ok {
-		return model.Metric{}, errors.New("counter value not found")
+		return model.Metric{}, fmt.Errorf("counter with name %s not found", name)
 	}
 
 	value := int64(val)
-	model := model.Metric{
-		ID: name,
+	metric := model.Metric{
+		ID:    name,
 		MType: "counter",
 		Delta: &value,
 	}
 
-	return model, nil
+	return metric, nil
 }
 
 func (s *memory) Get() map[string]string {

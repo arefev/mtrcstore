@@ -11,10 +11,16 @@ func InitRouter(h *handler.MetricHandlers) *chi.Mux {
 	r.Use(middleware.Logger)
 
 	r.Get("/", h.Get)
-	r.Get("/value/{type}/{name}", h.Find)
-	r.Post("/update/{type}/{name}/{value}", h.Update)
-	r.Post("/value", h.FindJson)
-	r.Post("/update", h.UpdateJson)
+
+	r.Route("/value", func(r chi.Router) {
+		r.Get("/{type}/{name}", h.Find)
+		r.Post("/", h.FindJSON)
+	})
+
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/{type}/{name}/{value}", h.Update)
+		r.Post("/", h.UpdateJSON)
+	})
 
 	return r
 }

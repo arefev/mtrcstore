@@ -1,6 +1,8 @@
 package service
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"log"
 	"runtime"
@@ -41,8 +43,8 @@ func NewReport(s Storage, host string) Report {
 	return Report{
 		Storage:    s,
 		ServerHost: host,
-		updateUrl: url,
-		client: *client,
+		updateUrl:  url,
+		client:     *client,
 	}
 }
 
@@ -88,7 +90,7 @@ func (r *Report) sendCounters() {
 			MType: counterName,
 			Delta: &mVal,
 		}
-		
+
 		if err := r.send(&metric); err != nil {
 			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
 			continue
@@ -98,13 +100,20 @@ func (r *Report) sendCounters() {
 
 func (r *Report) send(m *model.Metric) error {
 	var err error
-	body, err := m.ToJSON()
+	jsonBody, err := m.ToJSON()
 	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	body := bytes.NewBuffer(nil)
+	w := gzip.NewWriter(body)
+	if _, err = w.Write([]byte(jsonBody)); err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
 
 	_, err = r.client.R().
 		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
 		SetBody(body).
 		Post(r.updateUrl)
 

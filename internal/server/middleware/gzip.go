@@ -13,12 +13,11 @@ func Gzip(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 
-		contentType := r.Header.Get("Content-Type")
+		contentType := r.Header.Get("Accept")
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		if supportsGzip && checkContentType(contentType) {
-			logger.Log.Info("Used gzip")
 
+		if supportsGzip && checkContentType(contentType) {
 			cw := service.NewCompressWriter(w)
 			ow = cw
 			defer func() {

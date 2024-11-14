@@ -178,6 +178,7 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
 	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
 		log.Printf("handler Get fail: %s", err.Error())
 		w.WriteHeader(http.StatusBadRequest)

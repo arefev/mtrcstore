@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Gzip(next http.Handler) http.Handler {
+func Compress(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 
@@ -32,6 +32,7 @@ func Gzip(next http.Handler) http.Handler {
 
 		contentEncoding := r.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
+
 		if sendsGzip {
 			cr, err := service.NewCompressReader(r.Body)
 			if err != nil {

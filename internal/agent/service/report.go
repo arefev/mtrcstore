@@ -34,7 +34,7 @@ type Storage interface {
 type Report struct {
 	Storage    Storage
 	ServerHost string
-	updateUrl  string
+	updateURL  string
 	client     resty.Client
 }
 
@@ -44,7 +44,7 @@ func NewReport(s Storage, host string) Report {
 	return Report{
 		Storage:    s,
 		ServerHost: host,
-		updateUrl:  url,
+		updateURL:  url,
 		client:     *client,
 	}
 }
@@ -105,7 +105,7 @@ func (r *Report) send(m *model.Metric) error {
 		return fmt.Errorf("send failed: %w", err)
 	}
 
-	body, err := r.gzip(jsonBody)
+	body, err := r.compress(jsonBody)
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
@@ -114,7 +114,7 @@ func (r *Report) send(m *model.Metric) error {
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
 		SetBody(body).
-		Post(r.updateUrl)
+		Post(r.updateURL)
 
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
@@ -123,7 +123,7 @@ func (r *Report) send(m *model.Metric) error {
 	return nil
 }
 
-func (r *Report) gzip(s string) (io.Writer, error) {
+func (r *Report) compress(s string) (io.Writer, error) {
 	var err error
 	body := bytes.NewBuffer(nil)
 	w := gzip.NewWriter(body)

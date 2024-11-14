@@ -2,6 +2,7 @@ package service
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -23,18 +24,25 @@ func (c *compressWriter) Header() http.Header {
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
-	return c.zw.Write(p)
+	res, err := c.zw.Write(p)
+	if err != nil {
+		return res, fmt.Errorf("compressWriter Write failed: %w", err)
+	}
+	return res, nil
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
+	if statusCode < http.StatusMultipleChoices {
 		c.w.Header().Set("Content-Encoding", "gzip")
 	}
 	c.w.WriteHeader(statusCode)
 }
 
 func (c *compressWriter) Close() error {
-	return c.zw.Close()
+	if err := c.zw.Close(); err != nil {
+		return fmt.Errorf("compressWriter Close failed: %w", err)
+	}
+	return nil
 }
 
 type compressReader struct {
@@ -45,7 +53,7 @@ type compressReader struct {
 func NewCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gzip reader failed: %w", err)
 	}
 
 	return &compressReader{
@@ -55,12 +63,16 @@ func NewCompressReader(r io.ReadCloser) (*compressReader, error) {
 }
 
 func (c compressReader) Read(p []byte) (n int, err error) {
-	return c.zr.Read(p)
+	n, err = c.zr.Read(p)
+	if err != nil {
+		return n, fmt.Errorf("compressReader Read failed: %w", err)
+	}
+	return n, nil
 }
 
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
-		return err
+		return fmt.Errorf("compressReader Close failed: %w", err)
 	}
-	return c.zr.Close()
+	return nil
 }

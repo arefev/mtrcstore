@@ -8,7 +8,7 @@ import (
 
 func InitRouter(h *handler.MetricHandlers) *chi.Mux {
 	r := chi.NewRouter()
-	// r.Use(middleware.Logger)
+	r.Use(middleware.Logger)
 	r.Use(middleware.Gzip)
 
 	r.Get("/", h.Get)

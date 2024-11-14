@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
@@ -97,6 +99,11 @@ func Test_main(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			
+			if err := logger.Init("debug"); err != nil {
+				fmt.Printf("logger init failed: %v", err)
+			}
+
 			storage := repository.NewMemory()
 			metricHandlers := handler.MetricHandlers{
 				Storage: &storage,
@@ -113,6 +120,7 @@ func Test_main(t *testing.T) {
 			req.URL = srv.URL + test.want.urlPath
 
 			res, err := req.Send()
+			fmt.Printf("%v", err)
 
 			require.NoError(t, err)
 			assert.Equal(t, test.want.code, res.StatusCode())

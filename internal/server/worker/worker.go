@@ -70,14 +70,14 @@ func (w *workerStore) Run() {
 func (w *workerStore) load() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_RDONLY, filePermission)
     if err != nil {
-        logger.Log.Info("worker open file failed", zap.Error(err))
+        logger.Log.Error("worker open file failed", zap.Error(err))
 		return
     }
 
 	r := json.NewDecoder(file)
 
 	if err := r.Decode(&w.Storage); err != nil {
-		logger.Log.Info("worker decode data failed", zap.Error(err))
+		logger.Log.Error("worker decode data failed", zap.Error(err))
 		return
 	}
 
@@ -95,21 +95,21 @@ func (w *workerStore) SaveEvent() {
 func (w *workerStore) save() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
     if err != nil {
-        logger.Log.Info("worker open file failed", zap.Error(err))
+        logger.Log.Error("worker open file failed", zap.Error(err))
 		return
     }
 
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			logger.Log.Info("worker close file failed", zap.Error(err))
+			logger.Log.Error("worker close file failed", zap.Error(err))
 			return
 		}
 	}()
 
 	wr := json.NewEncoder(file)
 	if err := wr.Encode(w.Storage); err != nil {
-		logger.Log.Info("worker encode data failed", zap.Error(err))
+		logger.Log.Error("worker encode data failed", zap.Error(err))
 		return
 	}
 

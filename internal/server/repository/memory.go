@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	CounterName = "counter"
-	GaugeName   = "gauge"
+	CounterName string = "counter"
+	GaugeName   string = "gauge"
 )
 
 type gauge float64
@@ -38,7 +38,7 @@ func NewMemory() memory {
 
 func (s *memory) Save(m model.Metric) error {
 	switch m.MType {
-	case "counter":
+	case CounterName:
 		if m.Delta == nil {
 			return errors.New("counter has not value")
 		}
@@ -63,7 +63,7 @@ func (s *memory) FindGauge(name string) (model.Metric, error) {
 	value := float64(val)
 	metric := model.Metric{
 		ID:    name,
-		MType: "gauge",
+		MType: GaugeName,
 		Value: &value,
 	}
 
@@ -79,7 +79,7 @@ func (s *memory) FindCounter(name string) (model.Metric, error) {
 	value := int64(val)
 	metric := model.Metric{
 		ID:    name,
-		MType: "counter",
+		MType: CounterName,
 		Delta: &value,
 	}
 

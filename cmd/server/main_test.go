@@ -10,6 +10,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"github.com/arefev/mtrcstore/internal/server/worker"
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,6 +108,13 @@ func Test_main(t *testing.T) {
 			metricHandlers := handler.MetricHandlers{
 				Storage: &storage,
 			}
+
+			const interval = 300
+			const fileStoragePath = "./storage.json"
+			const restore = true
+			go worker.
+				Init(interval, fileStoragePath, restore, &storage).
+				Run()
 
 			r := server.InitRouter(&metricHandlers)
 			srv := httptest.NewServer(r)

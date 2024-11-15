@@ -10,6 +10,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"github.com/arefev/mtrcstore/internal/server/worker"
 )
 
 func main() {
@@ -33,6 +34,10 @@ func run() error {
 	metricHandlers := handler.MetricHandlers{
 		Storage: &storage,
 	}
+
+	go worker.
+		Init(config.StoreInterval, config.FileStoragePath, config.Restore, &storage).
+		Run()
 
 	r := server.InitRouter(&metricHandlers)
 

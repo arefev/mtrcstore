@@ -11,6 +11,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/service"
+	"github.com/arefev/mtrcstore/internal/server/worker"
 	"go.uber.org/zap"
 )
 
@@ -54,6 +55,8 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	worker.Worker.SaveEvent()
 }
 
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +133,8 @@ func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	worker.Worker.SaveEvent()
 }
 
 func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {

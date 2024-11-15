@@ -54,7 +54,7 @@ test-iter8:
 	metricstest -test.v -test.run=^TestIteration8$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server -source-path=/home/arefev/dev/study/golang/mtrcstore -server-port=8080
 
 test-iter9:
-	metricstest -test.v -test.run=^TestIteration9$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server -source-path=/home/arefev/dev/study/golang/mtrcstore -server-port=8080
+	metricstest -test.v -test.run=^TestIteration9$$ -agent-binary-path=cmd/agent/agent -binary-path=cmd/server/server -source-path=/home/arefev/dev/study/golang/mtrcstore -server-port=8080 -file-storage-path=./storage.json
 
 
 .PHONY: golangci-lint-run

@@ -10,14 +10,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const filePermission = 0644
+const filePermission = 0o644
 
 var Worker *workerStore
 
 type workerStore struct {
-	StoreInterval   int
 	Storage         repository.Storage
 	FileStoragePath string
+	StoreInterval   int
 	storeByEvent    bool
 	restore         bool
 }
@@ -56,10 +56,8 @@ func (w *workerStore) Run() {
 	}
 
 	start := time.Now()
-	period := 0
-
 	for {
-		period = int(time.Since(start).Seconds())
+		period := int(time.Since(start).Seconds())
 		if period > w.StoreInterval {
 			w.save()
 			start = time.Now()

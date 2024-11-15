@@ -10,16 +10,16 @@ import (
 	"go.uber.org/zap"
 )
 
-const filePermission = 0644 
+const filePermission = 0644
 
 var Worker *workerStore
 
 type workerStore struct {
-	StoreInterval int
-	Storage repository.Storage
+	StoreInterval   int
+	Storage         repository.Storage
 	FileStoragePath string
-	storeByEvent bool
-	restore bool
+	storeByEvent    bool
+	restore         bool
 }
 
 func Init(interval int, fileStoragePath string, restore bool, storage repository.Storage) *workerStore {
@@ -28,11 +28,11 @@ func Init(interval int, fileStoragePath string, restore bool, storage repository
 	}
 
 	Worker = &workerStore{
-		StoreInterval: interval,
-		Storage: storage,
+		StoreInterval:   interval,
+		Storage:         storage,
 		FileStoragePath: fileStoragePath,
-		storeByEvent: interval == 0,
-		restore: restore,
+		storeByEvent:    interval == 0,
+		restore:         restore,
 	}
 
 	if restore {
@@ -44,7 +44,7 @@ func Init(interval int, fileStoragePath string, restore bool, storage repository
 
 func (w *workerStore) Run() {
 	logger.Log.Info(
-		"worker running with params", 
+		"worker running with params",
 		zap.Int("interval in seconds", w.StoreInterval),
 		zap.String("file", w.FileStoragePath),
 		zap.Bool("restore", w.restore),
@@ -69,10 +69,10 @@ func (w *workerStore) Run() {
 
 func (w *workerStore) load() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_RDONLY, filePermission)
-    if err != nil {
-        logger.Log.Error("worker open file failed", zap.Error(err))
+	if err != nil {
+		logger.Log.Error("worker open file failed", zap.Error(err))
 		return
-    }
+	}
 
 	r := json.NewDecoder(file)
 
@@ -85,7 +85,7 @@ func (w *workerStore) load() {
 }
 
 func (w *workerStore) SaveEvent() {
-	if (!w.storeByEvent) {
+	if !w.storeByEvent {
 		return
 	}
 
@@ -94,10 +94,10 @@ func (w *workerStore) SaveEvent() {
 
 func (w *workerStore) save() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
-    if err != nil {
-        logger.Log.Error("worker open file failed", zap.Error(err))
+	if err != nil {
+		logger.Log.Error("worker open file failed", zap.Error(err))
 		return
-    }
+	}
 
 	defer func() {
 		err := file.Close()

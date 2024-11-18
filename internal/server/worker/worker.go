@@ -66,7 +66,7 @@ func (w *workerStore) Run() {
 }
 
 func (w *workerStore) load() {
-	file, err := os.OpenFile(w.FileStoragePath, os.O_RDONLY, filePermission)
+	file, err := os.OpenFile(w.FileStoragePath, os.O_RDONLY|os.O_CREATE, filePermission)
 	if err != nil {
 		logger.Log.Error("worker open file failed", zap.Error(err))
 		return

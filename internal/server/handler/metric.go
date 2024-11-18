@@ -67,38 +67,24 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mName := r.PathValue("name")
-
-	check := func(m model.Metric, mType string, err error) {
-		var value string
-		if err != nil {
-			log.Printf("handler Find metric fail: %s", err.Error())
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		switch mType {
-		case repository.CounterName:
-			value = m.DeltaString()
-		default:
-			value = m.ValueString()
-		}
-
-		if _, err := w.Write([]byte(value)); err != nil {
-			log.Printf("handler Find metrics: response writer failed: %s", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	metric, err := h.Storage.Find(r.PathValue("name"), mType)
+	if err != nil {
+		log.Printf("handler Find metric failed: %s", err.Error())
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
+	var value string
 	switch mType {
 	case repository.CounterName:
-		m, err := h.Storage.FindCounter(mName)
-		check(m, mType, err)
-		return
+		value = metric.DeltaString()
 	default:
-		m, err := h.Storage.FindGauge(mName)
-		check(m, mType, err)
+		value = metric.ValueString()
+	}
+
+	if _, err := w.Write([]byte(value)); err != nil {
+		log.Printf("handler Find metrics: response writer failed: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }
@@ -155,29 +141,17 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	check := func(metric *model.Metric, err error) {
-		if err != nil {
-			log.Printf("handler FindJson metric fail: %s", err.Error())
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		resp := json.NewEncoder(w)
-		if err := resp.Encode(metric); err != nil {
-			logger.Log.Error("handler FindJson metrics: response writer failed", zap.Error(err))
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	value, err := h.Storage.Find(metric.ID, metric.MType)
+	if err != nil {
+		log.Printf("handler FindJson metric failed: %s", err.Error())
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	switch metric.MType {
-	case repository.CounterName:
-		value, err := h.Storage.FindCounter(metric.ID)
-		check(&value, err)
-		return
-	default:
-		value, err := h.Storage.FindGauge(metric.ID)
-		check(&value, err)
+	resp := json.NewEncoder(w)
+	if err := resp.Encode(value); err != nil {
+		logger.Log.Error("handler FindJson metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -100,7 +101,7 @@ func (r *Report) sendCounters() {
 }
 
 func (r *Report) send(m *model.Metric) error {
-	jsonBody, err := m.ToJSON()
+	jsonBody, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
@@ -123,11 +124,11 @@ func (r *Report) send(m *model.Metric) error {
 	return nil
 }
 
-func (r *Report) compress(s string) (io.Writer, error) {
+func (r *Report) compress(p []byte) (io.Writer, error) {
 	var err error
 	body := bytes.NewBuffer(nil)
 	w := gzip.NewWriter(body)
-	if _, err = w.Write([]byte(s)); err != nil {
+	if _, err = w.Write(p); err != nil {
 		return body, fmt.Errorf("gzip failed: %w", err)
 	}
 

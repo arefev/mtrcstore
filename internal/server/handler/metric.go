@@ -91,12 +91,11 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 
 func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	var metric model.Metric
-	data := json.NewDecoder(r.Body)
+	d := json.NewDecoder(r.Body)
 
 	w.Header().Add("Content-type", "application/json")
 
-	if err := data.Decode(&metric); err != nil {
-		logger.Log.Error("handler UpdateJson metrics: json decode failed", zap.Error(err))
+	if err := d.Decode(&metric); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -130,7 +129,6 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-type", "application/json")
 
 	if err := data.Decode(&metric); err != nil {
-		logger.Log.Error("handler FindJson metrics: json decode failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

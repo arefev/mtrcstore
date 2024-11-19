@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/url"
 	"runtime"
@@ -129,7 +128,7 @@ func (r *Report) send(m *model.Metric) error {
 	return nil
 }
 
-func (r *Report) compress(p []byte) (io.Writer, error) {
+func (r *Report) compress(p []byte) (*bytes.Buffer, error) {
 	var err error
 	body := bytes.NewBuffer(nil)
 	w := gzip.NewWriter(body)

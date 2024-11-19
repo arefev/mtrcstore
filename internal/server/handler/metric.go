@@ -41,12 +41,12 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ival := int64(mValue)
+	delta := int64(mValue)
 	metric := model.Metric{
 		ID:    mName,
 		MType: mType,
 		Value: &mValue,
-		Delta: &ival,
+		Delta: &delta,
 	}
 
 	if err := h.Storage.Save(metric); err != nil {

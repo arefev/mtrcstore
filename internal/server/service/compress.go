@@ -17,7 +17,7 @@ func NewCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
 		ResponseWriter: w,
 		zw:             gzip.NewWriter(w),
-		wroteHeader: false,
+		wroteHeader:    false,
 	}
 }
 

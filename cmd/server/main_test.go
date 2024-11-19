@@ -99,7 +99,7 @@ func Test_main(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cLog, err := logger.Build("info")
+			cLog, err := logger.Build("debug")
 			require.NoError(t, err)
 
 			storage := repository.NewMemory()

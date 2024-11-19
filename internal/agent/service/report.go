@@ -40,7 +40,7 @@ type Report struct {
 }
 
 func NewReport(s Storage, host string) (Report, error) {
-	updateUrl, err := url.JoinPath(protocol+host, updateURLPath)
+	updateURL, err := url.JoinPath(protocol+host, updateURLPath)
 	if err != nil {
 		return Report{}, fmt.Errorf("NewReport failed: %w", err)
 	}
@@ -49,7 +49,7 @@ func NewReport(s Storage, host string) (Report, error) {
 	return Report{
 		Storage:    s,
 		ServerHost: host,
-		updateURL:  updateUrl,
+		updateURL:  updateURL,
 		client:     *client,
 	}, nil
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"go.uber.org/zap"
 )
@@ -20,9 +19,10 @@ type workerStore struct {
 	StoreInterval   int
 	storeByEvent    bool
 	restore         bool
+	log             *zap.Logger
 }
 
-func Init(interval int, fileStoragePath string, restore bool, storage repository.Storage) *workerStore {
+func Init(interval int, fileStoragePath string, restore bool, storage repository.Storage, log *zap.Logger) *workerStore {
 	if Worker != nil {
 		return Worker
 	}
@@ -33,6 +33,7 @@ func Init(interval int, fileStoragePath string, restore bool, storage repository
 		FileStoragePath: fileStoragePath,
 		storeByEvent:    interval == 0,
 		restore:         restore,
+		log: log,
 	}
 
 	if restore {
@@ -43,7 +44,7 @@ func Init(interval int, fileStoragePath string, restore bool, storage repository
 }
 
 func (w *workerStore) Run() {
-	logger.Log.Info(
+	w.log.Info(
 		"worker running with params",
 		zap.Int("interval in seconds", w.StoreInterval),
 		zap.String("file", w.FileStoragePath),
@@ -68,18 +69,18 @@ func (w *workerStore) Run() {
 func (w *workerStore) load() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_RDONLY|os.O_CREATE, filePermission)
 	if err != nil {
-		logger.Log.Error("worker open file failed", zap.Error(err))
+		w.log.Error("worker open file failed", zap.Error(err))
 		return
 	}
 
 	r := json.NewDecoder(file)
 
 	if err := r.Decode(&w.Storage); err != nil {
-		logger.Log.Error("worker decode data failed", zap.Error(err))
+		w.log.Error("worker decode data failed", zap.Error(err))
 		return
 	}
 
-	logger.Log.Info("worker data loaded")
+	w.log.Info("worker data loaded")
 }
 
 func (w *workerStore) SaveEvent() {
@@ -93,23 +94,23 @@ func (w *workerStore) SaveEvent() {
 func (w *workerStore) save() {
 	file, err := os.OpenFile(w.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
 	if err != nil {
-		logger.Log.Error("worker open file failed", zap.Error(err))
+		w.log.Error("worker open file failed", zap.Error(err))
 		return
 	}
 
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			logger.Log.Error("worker close file failed", zap.Error(err))
+			w.log.Error("worker close file failed", zap.Error(err))
 			return
 		}
 	}()
 
 	wr := json.NewEncoder(file)
 	if err := wr.Encode(w.Storage); err != nil {
-		logger.Log.Error("worker encode data failed", zap.Error(err))
+		w.log.Error("worker encode data failed", zap.Error(err))
 		return
 	}
 
-	logger.Log.Info("worker data saved")
+	w.log.Info("worker data saved")
 }

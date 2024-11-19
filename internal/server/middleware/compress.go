@@ -4,12 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/service"
 	"go.uber.org/zap"
 )
 
-func Compress(next http.Handler) http.Handler {
+func (m *Middleware) Compress(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 
@@ -22,7 +21,7 @@ func Compress(next http.Handler) http.Handler {
 			ow = cw
 			defer func() {
 				if err := cw.Close(); err != nil {
-					logger.Log.Debug("writer body close error", zap.Error(err))
+					m.log.Debug("writer body close error", zap.Error(err))
 				}
 			}()
 
@@ -36,13 +35,13 @@ func Compress(next http.Handler) http.Handler {
 		if sendsGzip {
 			cr, err := service.NewCompressReader(r.Body)
 			if err != nil {
-				logger.Log.Debug("gzip error", zap.Error(err))
+				m.log.Debug("gzip error", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 			r.Body = cr
 			defer func() {
 				if err := cr.Close(); err != nil {
-					logger.Log.Debug("reader body close error", zap.Error(err))
+					m.log.Debug("reader body close error", zap.Error(err))
 				}
 			}()
 		}

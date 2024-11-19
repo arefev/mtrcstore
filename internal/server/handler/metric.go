@@ -3,11 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/service"
@@ -17,12 +15,21 @@ import (
 
 type MetricHandlers struct {
 	Storage repository.Storage
+	log     *zap.Logger
+}
+
+func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
+	m := MetricHandlers{
+		Storage: s,
+		log: log,
+	}
+	return &m
 }
 
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
-		log.Printf("handler Update metrics fail: %s", err.Error())
+		h.log.Error("handler Update metrics failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -31,7 +38,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	mValue, err := strconv.ParseFloat(r.PathValue("value"), 64)
 
 	if err != nil {
-		log.Printf("handler Update metrics fail: %s", err.Error())
+		h.log.Error("handler Update metrics failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -45,13 +52,13 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Storage.Save(metric); err != nil {
-		log.Printf("handler Update metrics: data save failed: %s", err.Error())
+		h.log.Error("handler Update metrics: data save failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if _, err := w.Write([]byte("Metrics are updated!")); err != nil {
-		log.Printf("handler Update metrics: response writer failed: %s", err.Error())
+		h.log.Error("handler Update metrics: response writer failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -62,14 +69,14 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
-		log.Printf("handler Find metric fail: %s", err.Error())
+		h.log.Error("handler Find metric failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	metric, err := h.Storage.Find(r.PathValue("name"), mType)
 	if err != nil {
-		log.Printf("handler Find metric failed: %s", err.Error())
+		h.log.Error("handler Find metric failed", zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -83,7 +90,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := w.Write([]byte(value)); err != nil {
-		log.Printf("handler Find metrics: response writer failed: %s", err.Error())
+		h.log.Error("handler Find metrics: response writer failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -101,20 +108,20 @@ func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.checkType(metric.MType); err != nil {
-		logger.Log.Error("handler UpdateJson metrics fail", zap.Error(err))
+		h.log.Error("handler UpdateJson metrics failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := h.Storage.Save(metric); err != nil {
-		logger.Log.Error("handler UpdateJson metrics: data save failed", zap.Error(err))
+		h.log.Error("handler UpdateJson metrics: data save failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	resp := json.NewEncoder(w)
 	if err := resp.Encode(metric); err != nil {
-		logger.Log.Error("handler UpdateJson metrics: response writer failed", zap.Error(err))
+		h.log.Error("handler UpdateJson metrics: response writer failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -134,21 +141,21 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.checkType(metric.MType); err != nil {
-		logger.Log.Error("handler FindJson metrics fail", zap.Error(err))
+		h.log.Error("handler FindJson metric failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	value, err := h.Storage.Find(metric.ID, metric.MType)
 	if err != nil {
-		log.Printf("handler FindJson metric failed: %s", err.Error())
+		h.log.Error("handler FindJson metric failed", zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	resp := json.NewEncoder(w)
 	if err := resp.Encode(value); err != nil {
-		logger.Log.Error("handler FindJson metrics: response writer failed", zap.Error(err))
+		h.log.Error("handler FindJson metric: response writer failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -157,7 +164,7 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
-		log.Printf("handler Get fail: %s", err.Error())
+		h.log.Error("handler Get failed", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

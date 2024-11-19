@@ -4,12 +4,14 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/middleware"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
-func InitRouter(h *handler.MetricHandlers) *chi.Mux {
+func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
+	m := middleware.NewMiddleware(log)
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Compress)
+	r.Use(m.Logger)
+	r.Use(m.Compress)
 
 	r.Get("/", h.Get)
 

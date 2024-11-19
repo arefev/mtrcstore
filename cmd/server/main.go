@@ -26,20 +26,19 @@ func run() error {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
 
-	if err := logger.Init(config.LogLevel); err != nil {
+	cLog, err := logger.Build(config.LogLevel)
+	if err != nil {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
 	storage := repository.NewMemory()
-	metricHandlers := handler.MetricHandlers{
-		Storage: &storage,
-	}
+	metricHandlers := handler.NewMetricHandlers(&storage, cLog)
 
 	go worker.
-		Init(config.StoreInterval, config.FileStoragePath, config.Restore, &storage).
+		Init(config.StoreInterval, config.FileStoragePath, config.Restore, &storage, cLog).
 		Run()
 
-	r := server.InitRouter(&metricHandlers)
+	r := server.InitRouter(metricHandlers, cLog)
 
 	log.Printf("Server up on address %s\n", config.Address)
 	log.Printf("Log level %s\n", config.LogLevel)

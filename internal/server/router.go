@@ -9,7 +9,7 @@ import (
 
 func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 	m := middleware.NewMiddleware(log)
-	r := chi.NewRouter()	
+	r := chi.NewRouter()
 	r.Use(m.Logger, m.Compress)
 
 	r.Get("/", h.Get)

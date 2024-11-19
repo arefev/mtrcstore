@@ -37,7 +37,9 @@ func TestWorker_read(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			serverHost := "http://localhost:8080"
 			storage := repository.NewMemory()
-			report := service.NewReport(&storage, serverHost)
+			report, err := service.NewReport(&storage, serverHost)
+			assert.NoError(t, err)
+
 			w := Worker{
 				Report:         &report,
 				ReportInterval: tt.fields.ReportInterval,

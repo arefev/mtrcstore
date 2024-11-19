@@ -24,7 +24,11 @@ func run() error {
 	}
 
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address)
+	report, err := service.NewReport(&storage, config.Address)
+	if err != nil {
+		return err
+	}
+
 	worker := agent.Worker{
 		Report:         &report,
 		PollInterval:   config.PollInterval,

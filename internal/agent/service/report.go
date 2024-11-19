@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
@@ -39,15 +40,19 @@ type Report struct {
 	client     resty.Client
 }
 
-func NewReport(s Storage, host string) Report {
-	url := fmt.Sprintf("%s%s/%s", protocol, host, updateURLPath)
+func NewReport(s Storage, host string) (Report, error) {
+	updateUrl, err := url.JoinPath(protocol+host, updateURLPath)
+	if err != nil {
+		return Report{}, fmt.Errorf("NewReport failed: %w", err)
+	}
+
 	client := resty.New()
 	return Report{
 		Storage:    s,
 		ServerHost: host,
-		updateURL:  url,
+		updateURL:  updateUrl,
 		client:     *client,
-	}
+	}, nil
 }
 
 func (r *Report) Send() {

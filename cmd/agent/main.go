@@ -26,7 +26,7 @@ func run() error {
 	storage := repository.NewMemory()
 	report, err := service.NewReport(&storage, config.Address)
 	if err != nil {
-		return err
+		return fmt.Errorf("main run() failed: %w", err)
 	}
 
 	worker := agent.Worker{

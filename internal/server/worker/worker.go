@@ -14,24 +14,24 @@ const filePermission = 0o644
 var Worker *workerStore
 
 type workerStore struct {
+	log             *zap.Logger
 	Storage         repository.Storage
 	FileStoragePath string
-	log             *zap.Logger
 	StoreInterval   int
-	storeByEvent    bool
 	restore         bool
+	storeByEvent    bool
 }
 
-func Init(interval int, fileStoragePath string, restore bool, storage repository.Storage, log *zap.Logger) *workerStore {
+func Init(intrvl int, filePath string, restore bool, storage repository.Storage, log *zap.Logger) *workerStore {
 	if Worker != nil {
 		return Worker
 	}
 
 	Worker = &workerStore{
-		StoreInterval:   interval,
+		StoreInterval:   intrvl,
 		Storage:         storage,
-		FileStoragePath: fileStoragePath,
-		storeByEvent:    interval == 0,
+		FileStoragePath: filePath,
+		storeByEvent:    intrvl == 0,
 		restore:         restore,
 		log:             log,
 	}

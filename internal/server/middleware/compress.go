@@ -10,23 +10,18 @@ import (
 
 func (m *Middleware) Compress(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ow := w
-
 		contentType := r.Header.Get("Accept")
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
 
 		if supportsGzip && checkContentType(contentType) {
-			cw := service.NewCompressWriter(w)
-			ow = cw
+			ow := service.NewCompressWriter(w)
+			w = ow
 			defer func() {
-				if err := cw.Close(); err != nil {
+				if err := ow.Close(); err != nil {
 					m.log.Debug("writer body close error", zap.Error(err))
 				}
 			}()
-
-			// Почему-то не вызывается WriteHeader из ow
-			ow.Header().Set("Content-Encoding", "gzip")
 		}
 
 		contentEncoding := r.Header.Get("Content-Encoding")
@@ -47,7 +42,7 @@ func (m *Middleware) Compress(next http.Handler) http.Handler {
 			}()
 		}
 
-		next.ServeHTTP(ow, r)
+		next.ServeHTTP(w, r)
 	})
 }
 

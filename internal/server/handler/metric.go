@@ -21,7 +21,7 @@ type MetricHandlers struct {
 func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
 	m := MetricHandlers{
 		Storage: s,
-		log: log,
+		log:     log,
 	}
 	return &m
 }

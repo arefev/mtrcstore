@@ -37,6 +37,7 @@ func (m *Middleware) Compress(next http.Handler) http.Handler {
 			if err != nil {
 				m.log.Debug("gzip error", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 			r.Body = cr
 			defer func() {

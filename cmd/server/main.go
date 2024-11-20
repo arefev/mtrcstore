@@ -11,6 +11,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/worker"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -40,7 +41,11 @@ func run() error {
 
 	r := server.InitRouter(metricHandlers, cLog)
 
-	log.Printf("Server up on address %s\n", config.Address)
-	log.Printf("Log level %s\n", config.LogLevel)
+	cLog.Info(
+		"Server running", 
+		zap.String("address", config.Address),
+		zap.String("log level", config.LogLevel),
+	)
+	
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }

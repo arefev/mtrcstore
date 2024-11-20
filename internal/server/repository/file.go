@@ -16,11 +16,11 @@ var workerRunnig = false
 
 type file struct {
 	memory
+	log             *zap.Logger
 	fileStoragePath string
 	storeInterval   int
 	restore         bool
 	storeByEvent    bool
-	log             *zap.Logger
 }
 
 func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {

@@ -10,7 +10,6 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
-	"github.com/arefev/mtrcstore/internal/server/worker"
 	"go.uber.org/zap"
 )
 
@@ -32,20 +31,18 @@ func run() error {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
-	storage := repository.NewMemory()
-	metricHandlers := handler.NewMetricHandlers(&storage, cLog)
+	storage := repository.
+		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
+		WorkerRun()
 
-	go worker.
-		Init(config.StoreInterval, config.FileStoragePath, config.Restore, &storage, cLog).
-		Run()
-
+	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog)
 
 	cLog.Info(
-		"Server running", 
+		"Server running",
 		zap.String("address", config.Address),
 		zap.String("log level", config.LogLevel),
 	)
-	
+
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }

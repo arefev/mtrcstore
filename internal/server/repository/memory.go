@@ -29,8 +29,8 @@ type memory struct {
 	Counter map[string]counter
 }
 
-func NewMemory() memory {
-	return memory{
+func NewMemory() *memory {
+	return &memory{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
 	}

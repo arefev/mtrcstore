@@ -32,7 +32,10 @@ func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 		storeByEvent:    intrvl == 0,
 		log:             log,
 	}
-	file.load()
+
+	if restore {
+		file.load()
+	}
 
 	return &file
 }

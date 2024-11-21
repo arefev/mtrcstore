@@ -14,6 +14,7 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 	r.Use(m.Compress)
 
 	r.Get("/", h.Get)
+	r.Get("/ping", h.Ping)
 
 	r.Route("/value", func(r chi.Router) {
 		r.Get("/{type}/{name}", h.Find)

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,16 +11,19 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/arefev/mtrcstore/internal/server/service"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 )
 
 type MetricHandlers struct {
 	Storage repository.Storage
+	db      *sql.DB
 	log     *zap.Logger
 }
 
-func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
+func NewMetricHandlers(s repository.Storage, db *sql.DB, log *zap.Logger) *MetricHandlers {
 	m := MetricHandlers{
 		Storage: s,
+		db:      db,
 		log:     log,
 	}
 	return &m
@@ -167,4 +171,19 @@ func (h *MetricHandlers) checkType(t string) error {
 	}
 
 	return nil
+}
+
+func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	if err := h.db.PingContext(ctx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := w.Write([]byte("DB connected!")); err != nil {
+		h.log.Error("handler Ping metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }

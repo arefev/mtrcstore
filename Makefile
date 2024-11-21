@@ -1,3 +1,5 @@
+include .env
+
 GOLANGCI_LINT_CACHE?=/tmp/praktikum-golangci-lint-cache
 T_AGENT_BINARY_PATH=cmd/agent/agent
 T_BINARY_PATH=cmd/server/server
@@ -15,7 +17,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server
+	./cmd/server/server -d="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=disable"
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/

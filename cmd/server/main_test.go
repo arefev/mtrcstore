@@ -23,7 +23,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 	const interval = 300
 	const fileStoragePath = "./storage.json"
 	const restore = true
-			
+
 	type want struct {
 		urlPath      string
 		code         int

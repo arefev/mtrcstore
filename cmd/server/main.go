@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
@@ -31,11 +33,17 @@ func run() error {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
+	db, err := sql.Open("pgx", config.DatabaseDSN)
+	if err != nil {
+		return fmt.Errorf("db init failed: %w", err)
+	}
+	defer db.Close()
+
 	storage := repository.
 		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
 		WorkerRun()
 
-	metricHandlers := handler.NewMetricHandlers(storage, cLog)
+	metricHandlers := handler.NewMetricHandlers(storage, db, cLog)
 	r := server.InitRouter(metricHandlers, cLog)
 
 	cLog.Info(

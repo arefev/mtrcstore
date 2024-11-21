@@ -6,6 +6,8 @@ services:
     image: postgres
     container_name: mtrcstore_db
     restart: always
+    ports:
+      - ${DB_LOCAL_PORT}:${DB_PORT}
     volumes:
       - mtrcstore-db-data:/var/lib/postgresql/data
     environment:

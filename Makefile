@@ -4,6 +4,8 @@ T_BINARY_PATH=cmd/server/server
 T_SOURCE_PATH=/home/arefev/dev/study/golang/mtrcstore
 T_SERVER_PORT=8080
 T_FILE_STORAGE_PATH=./storage.json
+USER=CURRENT_UID=$$(id -u):0
+DOCKER_PROJECT_NAME=mtrcstore
 
 
 .PHONY: build server-build server server-run server-build agent agent-run agent-build gofmt test
@@ -28,6 +30,9 @@ agent-build:
 
 gofmt:
 	gofmt -s -w ./
+
+containers:
+	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
 test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9
 

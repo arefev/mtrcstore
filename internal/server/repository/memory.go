@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -27,12 +29,14 @@ func (c counter) String() string {
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
+	db      *sql.DB
 }
 
-func NewMemory() *memory {
+func NewMemory(db *sql.DB) *memory {
 	return &memory{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
+		db:      db,
 	}
 }
 
@@ -105,4 +109,11 @@ func (s *memory) Get() map[string]string {
 	}
 
 	return all
+}
+
+func (s *memory) Ping() error {
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	return s.db.PingContext(ctx)
 }

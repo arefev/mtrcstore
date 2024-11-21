@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -23,9 +24,9 @@ type file struct {
 	storeByEvent    bool
 }
 
-func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
+func NewFile(intrvl int, filePath string, restore bool, db *sql.DB, log *zap.Logger) *file {
 	file := file{
-		memory:          *NewMemory(),
+		memory:          *NewMemory(db),
 		fileStoragePath: filePath,
 		storeInterval:   intrvl,
 		restore:         restore,

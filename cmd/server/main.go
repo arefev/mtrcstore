@@ -40,10 +40,10 @@ func run() error {
 	defer db.Close()
 
 	storage := repository.
-		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
+		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, db, cLog).
 		WorkerRun()
 
-	metricHandlers := handler.NewMetricHandlers(storage, db, cLog)
+	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog)
 
 	cLog.Info(

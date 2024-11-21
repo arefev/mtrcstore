@@ -3,6 +3,7 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"time"
 
@@ -10,23 +11,23 @@ import (
 	"go.uber.org/zap"
 )
 
-const filePermission = 0o644
-
-var workerRunnig = false
-
 type file struct {
 	memory
 	log             *zap.Logger
 	fileStoragePath string
+	filePermission  fs.FileMode
 	storeInterval   int
 	restore         bool
 	storeByEvent    bool
 }
 
 func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
+	const filePermission fs.FileMode = 0o644
+	
 	file := file{
 		memory:          *NewMemory(),
 		fileStoragePath: filePath,
+		filePermission:  filePermission,
 		storeInterval:   intrvl,
 		restore:         restore,
 		storeByEvent:    intrvl == 0,
@@ -41,7 +42,7 @@ func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 }
 
 func (f *file) load() {
-	file, err := os.OpenFile(f.fileStoragePath, os.O_RDONLY|os.O_CREATE, filePermission)
+	file, err := os.OpenFile(f.fileStoragePath, os.O_RDONLY|os.O_CREATE, f.filePermission)
 	if err != nil {
 		f.log.Error("worker open file failed", zap.Error(err))
 		return
@@ -58,11 +59,7 @@ func (f *file) load() {
 }
 
 func (f *file) WorkerRun() *file {
-	if !workerRunnig {
-		go f.worker()
-		workerRunnig = true
-	}
-
+	go f.worker()
 	return f
 }
 
@@ -90,7 +87,7 @@ func (f *file) worker() {
 }
 
 func (f *file) write() {
-	file, err := os.OpenFile(f.fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
+	file, err := os.OpenFile(f.fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.filePermission)
 	if err != nil {
 		f.log.Error("worker open file failed", zap.Error(err))
 		return
@@ -126,7 +123,7 @@ func (f *file) writeEvent() error {
 		return nil
 	}
 
-	file, err := os.OpenFile(f.fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePermission)
+	file, err := os.OpenFile(f.fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.filePermission)
 	if err != nil {
 		return fmt.Errorf("worker open file failed: %w", err)
 	}

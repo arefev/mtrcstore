@@ -40,12 +40,17 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	delta := int64(mValue)
 	metric := model.Metric{
 		ID:    mName,
 		MType: mType,
-		Value: &mValue,
-		Delta: &delta,
+	}
+
+	switch mType {
+	case repository.CounterName:
+		delta := int64(mValue)
+		metric.Delta = &delta
+	default:
+		metric.Value = &mValue
 	}
 
 	if err := h.Storage.Save(metric); err != nil {

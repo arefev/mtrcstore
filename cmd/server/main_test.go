@@ -174,3 +174,140 @@ func Test_UpdateShortUrl(t *testing.T) {
 		})
 	}
 }
+
+func Test_UpdateFullUrl(t *testing.T) {
+	var delta int64 = 1
+	var value float64 = 1
+
+	type want struct {
+		metric     model.Metric
+		err        error
+		urlPath    string
+		statusCode int
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test counter saved",
+			want: want{
+				metric: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+					Delta: &delta,
+				},
+				err:        nil,
+				urlPath:    "/update/counter/PollCounter/1",
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "positive test gauge saved",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/update/gauge/Alloc/1",
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "bad request with invalid value",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/update/gauge/Alloc/test",
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "bad request with invalid type",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/update/test/Alloc/1",
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "404 with invalid template path №1",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/update/counter",
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "404 with invalid template path №2",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/update/gauge/Alloc/1/test",
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "bad request when saving failed",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        fmt.Errorf("saved failed"),
+				urlPath:    "/update/gauge/Alloc/1",
+				statusCode: http.StatusBadRequest,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			storage := mocks.NewMockStorage(ctrl)
+			storage.EXPECT().Save(test.want.metric).MaxTimes(1).Return(test.want.err)
+
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
+
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog)
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
+			req := resty.New().R()
+			req.Method = http.MethodPost
+			req.URL = srv.URL + test.want.urlPath
+
+			require.NoError(t, err)
+
+			res, err := req.Send()
+			require.NoError(t, err)
+			require.Equal(t, test.want.statusCode, res.StatusCode())
+		})
+	}
+}

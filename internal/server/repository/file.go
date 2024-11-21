@@ -15,15 +15,15 @@ type file struct {
 	memory
 	log             *zap.Logger
 	fileStoragePath string
-	filePermission  fs.FileMode
 	storeInterval   int
+	filePermission  fs.FileMode
 	restore         bool
 	storeByEvent    bool
 }
 
 func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 	const filePermission fs.FileMode = 0o644
-	
+
 	file := file{
 		memory:          *NewMemory(),
 		fileStoragePath: filePath,

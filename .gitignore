@@ -25,4 +25,6 @@ vendor/
 .vscode
 
 # other
+*.json
 golangci-lint
+q.md

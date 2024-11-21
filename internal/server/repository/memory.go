@@ -2,7 +2,15 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+
+	"github.com/arefev/mtrcstore/internal/server/model"
+)
+
+const (
+	CounterName string = "counter"
+	GaugeName   string = "gauge"
 )
 
 type gauge float64
@@ -21,40 +29,69 @@ type memory struct {
 	Counter map[string]counter
 }
 
-func NewMemory() memory {
-	return memory{
+func NewMemory() *memory {
+	return &memory{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
 	}
 }
 
-func (s *memory) Save(mType string, name string, value float64) error {
-	switch mType {
-	case "counter":
-		s.Counter[name] += counter(value)
+func (s *memory) Save(m model.Metric) error {
+	switch m.MType {
+	case CounterName:
+		if m.Delta == nil {
+			return errors.New("counter has not value")
+		}
+		s.Counter[m.ID] += counter(*m.Delta)
 	default:
-		s.Gauge[name] = gauge(value)
+		if m.Value == nil {
+			return errors.New("gauge has not value")
+		}
+
+		s.Gauge[m.ID] = gauge(*m.Value)
 	}
 
 	return nil
 }
 
-func (s *memory) FindGauge(name string) (gauge, error) {
+func (s *memory) findGauge(name string) (model.Metric, error) {
 	val, ok := s.Gauge[name]
 	if !ok {
-		return 0, errors.New("gauge value not found")
+		return model.Metric{}, fmt.Errorf("gauge with name %s not found", name)
 	}
 
-	return val, nil
+	value := float64(val)
+	metric := model.Metric{
+		ID:    name,
+		MType: GaugeName,
+		Value: &value,
+	}
+
+	return metric, nil
 }
 
-func (s *memory) FindCounter(name string) (counter, error) {
+func (s *memory) findCounter(name string) (model.Metric, error) {
 	val, ok := s.Counter[name]
 	if !ok {
-		return 0, errors.New("counter value not found")
+		return model.Metric{}, fmt.Errorf("counter with name %s not found", name)
 	}
 
-	return val, nil
+	value := int64(val)
+	metric := model.Metric{
+		ID:    name,
+		MType: CounterName,
+		Delta: &value,
+	}
+
+	return metric, nil
+}
+
+func (s *memory) Find(id string, mType string) (model.Metric, error) {
+	if mType == CounterName {
+		return s.findCounter(id)
+	}
+
+	return s.findGauge(id)
 }
 
 func (s *memory) Get() map[string]string {

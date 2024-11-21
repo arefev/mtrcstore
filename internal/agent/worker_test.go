@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/arefev/mtrcstore/internal/agent/repository"
+	"github.com/arefev/mtrcstore/internal/agent/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,20 +35,22 @@ func TestWorker_read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := repository.NewMemory()
 			serverHost := "http://localhost:8080"
+			storage := repository.NewMemory()
+			report, err := service.NewReport(&storage, serverHost)
+			assert.NoError(t, err)
 
-			w := &Worker{
+			w := Worker{
+				Report:         &report,
 				ReportInterval: tt.fields.ReportInterval,
 				PollInterval:   tt.fields.PollInterval,
-				Storage:        &storage,
-				ServerHost:     serverHost,
 			}
-			assert.NoError(t, w.read(tt.args.memStats))
-			w.Storage.IncrementCounter()
 
-			assert.Contains(t, w.Storage.GetGauges(), "Alloc")
-			assert.Contains(t, w.Storage.GetCounters(), "PollCount")
+			assert.NoError(t, w.read(tt.args.memStats))
+			w.Report.IncrementCounter()
+
+			assert.Contains(t, storage.GetGauges(), "Alloc")
+			assert.Contains(t, storage.GetCounters(), "PollCount")
 		})
 	}
 }

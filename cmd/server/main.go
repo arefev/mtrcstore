@@ -8,7 +8,9 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -24,13 +26,23 @@ func run() error {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
 
-	storage := repository.NewMemory()
-	metricHandlers := handler.MetricHandlers{
-		Storage: &storage,
+	cLog, err := logger.Build(config.LogLevel)
+	if err != nil {
+		return fmt.Errorf("logger init failed: %w", err)
 	}
 
-	r := server.InitRouter(&metricHandlers)
+	storage := repository.
+		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
+		WorkerRun()
 
-	log.Printf("Server up on address %s\n", config.Address)
+	metricHandlers := handler.NewMetricHandlers(storage, cLog)
+	r := server.InitRouter(metricHandlers, cLog)
+
+	cLog.Info(
+		"Server running",
+		zap.String("address", config.Address),
+		zap.String("log level", config.LogLevel),
+	)
+
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }

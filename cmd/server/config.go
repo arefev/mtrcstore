@@ -8,9 +8,17 @@ import (
 )
 
 const Address = "localhost:8080"
+const LogLevel = "info"
+const StoreInterval = 300
+const FileStoragePath = "./storage.json"
+const Restore = true
 
 type Config struct {
-	Address string `env:"ADDRESS"`
+	Address         string `env:"ADDRESS"`
+	LogLevel        string `env:"LOG_LEVEL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	StoreInterval   int    `env:"STORE_INTERVAL"`
+	Restore         bool   `env:"RESTORE"`
 }
 
 func NewConfig(params []string) (Config, error) {
@@ -30,6 +38,10 @@ func NewConfig(params []string) (Config, error) {
 func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
 	f.StringVar(&cnf.Address, "a", Address, "address and port to run server")
+	f.StringVar(&cnf.LogLevel, "l", LogLevel, "log level")
+	f.IntVar(&cnf.StoreInterval, "i", StoreInterval, "store interval")
+	f.StringVar(&cnf.FileStoragePath, "f", FileStoragePath, "file storage path interval")
+	f.BoolVar(&cnf.Restore, "r", Restore, "need restore")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)
 	}

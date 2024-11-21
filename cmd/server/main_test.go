@@ -7,6 +7,7 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
@@ -97,12 +98,17 @@ func Test_main(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			storage := repository.NewMemory()
-			metricHandlers := handler.MetricHandlers{
-				Storage: &storage,
-			}
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
 
-			r := server.InitRouter(&metricHandlers)
+			const interval = 300
+			const fileStoragePath = "./storage.json"
+			const restore = true
+
+			storage := repository.NewFile(interval, fileStoragePath, restore, cLog)
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog)
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 

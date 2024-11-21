@@ -1,8 +1,9 @@
 package repository
 
+import "github.com/arefev/mtrcstore/internal/server/model"
+
 type Storage interface {
-	Save(mType string, name string, value float64) error
-	FindGauge(name string) (gauge, error)
-	FindCounter(name string) (counter, error)
+	Save(m model.Metric) error
+	Find(id string, mType string) (model.Metric, error)
 	Get() map[string]string
 }

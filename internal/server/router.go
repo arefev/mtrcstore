@@ -2,17 +2,28 @@ package server
 
 import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
+	"github.com/arefev/mtrcstore/internal/server/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
 )
 
-func InitRouter(h *handler.MetricHandlers) *chi.Mux {
+func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
+	m := middleware.NewMiddleware(log)
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	r.Use(m.Logger)
+	r.Use(m.Compress)
 
 	r.Get("/", h.Get)
-	r.Get("/value/{type}/{name}", h.Find)
-	r.Post("/update/{type}/{name}/{value}", h.Update)
+
+	r.Route("/value", func(r chi.Router) {
+		r.Get("/{type}/{name}", h.Find)
+		r.Post("/", h.FindJSON)
+	})
+
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/{type}/{name}/{value}", h.Update)
+		r.Post("/", h.UpdateJSON)
+	})
 
 	return r
 }

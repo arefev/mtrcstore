@@ -26,7 +26,7 @@ func Test_Get(t *testing.T) {
 		want want
 	}{
 		{
-			name: "positive test 1 elem",
+			name: "1 elem",
 			want: want{
 				value: map[string]string{
 					"PollCounter": "1",
@@ -34,7 +34,7 @@ func Test_Get(t *testing.T) {
 			},
 		},
 		{
-			name: "positive test 2 elems",
+			name: "2 elems",
 			want: want{
 				value: map[string]string{
 					"PollCounter": "1",
@@ -43,7 +43,7 @@ func Test_Get(t *testing.T) {
 			},
 		},
 		{
-			name: "positive test empty",
+			name: "empty",
 			want: want{
 				value: map[string]string{},
 			},
@@ -101,7 +101,7 @@ func Test_UpdateShortUrl(t *testing.T) {
 		want want
 	}{
 		{
-			name: "positive test counter saved",
+			name: "save counter",
 			want: want{
 				metric: model.Metric{
 					ID:    "PollCounter",
@@ -113,7 +113,7 @@ func Test_UpdateShortUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "positive test gauge saved",
+			name: "save gauge",
 			want: want{
 				metric: model.Metric{
 					ID:    "Alloc",
@@ -190,7 +190,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 		want want
 	}{
 		{
-			name: "positive test counter saved",
+			name: "save counter",
 			want: want{
 				metric: model.Metric{
 					ID:    "PollCounter",
@@ -203,7 +203,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "positive test gauge saved",
+			name: "save gauge",
 			want: want{
 				metric: model.Metric{
 					ID:    "Alloc",
@@ -308,6 +308,223 @@ func Test_UpdateFullUrl(t *testing.T) {
 			res, err := req.Send()
 			require.NoError(t, err)
 			require.Equal(t, test.want.statusCode, res.StatusCode())
+		})
+	}
+}
+
+func Test_FindShortUrl(t *testing.T) {
+	const urlPath string = "/value"
+	var delta int64 = 1
+	var value float64 = 1.55
+
+	type want struct {
+		metric     model.Metric
+		data       model.Metric
+		err        error
+		statusCode int
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "counter found",
+			want: want{
+				metric: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+					Delta: &delta,
+				},
+				data: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+				},
+				err:        nil,
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "gauge found",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				data: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+				},
+				err:        nil,
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "404 when counter id not found",
+			want: want{
+				metric: model.Metric{},
+				data: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+				},
+				err:        fmt.Errorf("not found"),
+				statusCode: http.StatusNotFound,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			storage := mocks.NewMockStorage(ctrl)
+			storage.
+				EXPECT().
+				Find(test.want.data.ID, test.want.data.MType).
+				MaxTimes(1).
+				Return(test.want.metric, test.want.err)
+
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
+
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog)
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
+			req := resty.New().R()
+			req.Method = http.MethodPost
+			req.SetHeader("Content-type", "application/json")
+			req.URL = srv.URL + urlPath
+
+			jsonData, err := json.Marshal(test.want.data)
+			require.NoError(t, err)
+
+			req.Body = jsonData
+			res, err := req.Send()
+			require.NoError(t, err)
+
+			jsonValue, err := json.Marshal(test.want.metric)
+			require.NoError(t, err)
+
+			require.NoError(t, err)
+			require.Equal(t, test.want.statusCode, res.StatusCode())
+
+			if test.want.err == nil {
+				require.Contains(t, string(res.Body()), string(jsonValue))
+			}
+		})
+	}
+}
+func Test_FindFullUrl(t *testing.T) {
+	var delta int64 = 1
+	var value float64 = 1.55
+
+	type want struct {
+		metric     model.Metric
+		err        error
+		urlPath    string
+		statusCode int
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "counter found",
+			want: want{
+				metric: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+					Delta: &delta,
+				},
+				err:        nil,
+				urlPath:    "/value/counter/PollCounter",
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "gauge found",
+			want: want{
+				metric: model.Metric{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &value,
+				},
+				err:        nil,
+				urlPath:    "/value/gauge/Alloc",
+				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name: "404 when counter id not found",
+			want: want{
+				metric: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+					Delta: &delta,
+				},
+				err:        fmt.Errorf("not found"),
+				urlPath:    "/value/counter/PollCounter",
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "bad request when invalid type",
+			want: want{
+				metric: model.Metric{
+					ID:    "PollCounter",
+					MType: "counter",
+					Delta: &delta,
+				},
+				err:        fmt.Errorf("bad request"),
+				urlPath:    "/value/test/PollCounter",
+				statusCode: http.StatusBadRequest,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			storage := mocks.NewMockStorage(ctrl)
+			storage.
+				EXPECT().
+				Find(test.want.metric.ID, test.want.metric.MType).
+				MaxTimes(1).
+				Return(test.want.metric, test.want.err)
+
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
+
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog)
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
+			req := resty.New().R()
+			req.Method = http.MethodGet
+			req.URL = srv.URL + test.want.urlPath
+
+			require.NoError(t, err)
+
+			res, err := req.Send()
+			require.NoError(t, err)
+			require.Equal(t, test.want.statusCode, res.StatusCode())
+			if test.want.err == nil {
+				var value string
+				if test.want.metric.MType == "counter" {
+					value = test.want.metric.DeltaString()
+				} else {
+					value = test.want.metric.ValueString()
+				}
+				require.Contains(t, string(res.Body()), value)
+			}
 		})
 	}
 }

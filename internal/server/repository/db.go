@@ -127,13 +127,11 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 
 	err := row.Err()
 	if err != nil {
-		rep.log.Error("rep db Find failed", zap.Error(err))
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
 
 	err = row.Scan(&metric.MType, &metric.ID, &metric.Value, &metric.Delta)
 	if err != nil {
-		rep.log.Error("rep db Find failed", zap.Error(err))
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
 

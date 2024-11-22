@@ -36,7 +36,7 @@ gofmt:
 containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
-test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9
+test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10
 
 test-iter1:
 	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
@@ -71,6 +71,8 @@ test-iter8:
 test-iter9:
 	metricstest -test.v -test.run=^TestIteration9$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
 
+test-iter10:
+	metricstest -test.v -test.run=^TestIteration10$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
 
 .PHONY: golangci-lint-run
 golangci-lint-run: _golangci-lint-rm-unformatted-report

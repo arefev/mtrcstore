@@ -63,6 +63,20 @@ func (mr *MockStorageMockRecorder) Get() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStorage)(nil).Get))
 }
 
+// MassSave mocks base method.
+func (m *MockStorage) MassSave(arg0 []model.Metric) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MassSave", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MassSave indicates an expected call of MassSave.
+func (mr *MockStorageMockRecorder) MassSave(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MassSave", reflect.TypeOf((*MockStorage)(nil).MassSave), arg0)
+}
+
 // Ping mocks base method.
 func (m *MockStorage) Ping() error {
 	m.ctrl.T.Helper()

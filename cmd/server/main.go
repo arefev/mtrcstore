@@ -39,9 +39,11 @@ func run() error {
 	}
 	defer db.Close()
 
-	storage := repository.
-		NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, db, cLog).
-		WorkerRun()
+	// storage := repository.
+	// 	NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
+	// 	WorkerRun()
+
+	storage := repository.NewDatabaseRep(db)
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog)

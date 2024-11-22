@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -22,11 +21,11 @@ type file struct {
 	storeByEvent    bool
 }
 
-func NewFile(intrvl int, filePath string, restore bool, db *sql.DB, log *zap.Logger) *file {
+func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 	const filePermission fs.FileMode = 0o644
 
 	file := file{
-		memory:          *NewMemory(db),
+		memory:          *NewMemory(),
 		fileStoragePath: filePath,
 		filePermission:  filePermission,
 		storeInterval:   intrvl,

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
-	// "github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"

@@ -12,7 +12,7 @@ const (
 	LogLevel        string = "info"
 	DatabaseDSN     string = ""
 	StoreInterval   int    = 300
-	FileStoragePath string = "./storage.json"
+	FileStoragePath string = ""
 	Restore         bool   = true
 )
 

@@ -5,7 +5,7 @@ T_AGENT_BINARY_PATH=cmd/agent/agent
 T_BINARY_PATH=cmd/server/server
 T_SOURCE_PATH=/home/arefev/dev/study/golang/mtrcstore
 T_SERVER_PORT=8080
-T_FILE_STORAGE_PATH=./storage.json
+FILE_STORAGE_PATH=./storage.json
 USER=CURRENT_UID=$$(id -u):0
 DOCKER_PROJECT_NAME=mtrcstore
 DATABASE_DSN="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=disable"
@@ -40,43 +40,43 @@ containers:
 test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10 test-iter11
 
 test-iter1:
-	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter2a:
-	metricstest -test.v -test.run=^TestIteration2A$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration2A$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter2b:
-	metricstest -test.v -test.run=^TestIteration2B$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration2B$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter3a:
-	metricstest -test.v -test.run=^TestIteration3A$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration3A$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter3b:
-	metricstest -test.v -test.run=^TestIteration3B$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration3B$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter4:
-	metricstest -test.v -test.run=^TestIteration4$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration4$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter5:
-	metricstest -test.v -test.run=^TestIteration5$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration5$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter6:
-	metricstest -test.v -test.run=^TestIteration6$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration6$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter7:
-	metricstest -test.v -test.run=^TestIteration7$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration7$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter8:
-	metricstest -test.v -test.run=^TestIteration8$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration8$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter9:
-	metricstest -test.v -test.run=^TestIteration9$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration9$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter10:
-	metricstest -test.v -test.run=^TestIteration10$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration10$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
 
 test-iter11:
-	metricstest -test.v -test.run=^TestIteration11$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH} -database-dsn=${DATABASE_DSN}
+	metricstest -test.v -test.run=^TestIteration11$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH} -database-dsn=${DATABASE_DSN}
 
 .PHONY: golangci-lint-run
 golangci-lint-run: _golangci-lint-rm-unformatted-report

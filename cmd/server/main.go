@@ -32,13 +32,11 @@ func run() error {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
-	// storage := repository.
-	// 	NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
-	// 	WorkerRun()
+	cLog.Info("filePath", zap.Int("", len(config.FileStoragePath)))
 
-	storage, err := repository.NewDatabaseRep(config.DatabaseDSN, cLog)
+	storage, storageType, err := initStorage(&config, cLog)
 	if err != nil {
-		return fmt.Errorf("repository init failed: %w", err)
+		return fmt.Errorf("main run failed: %w", err)
 	}
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
@@ -48,7 +46,31 @@ func run() error {
 		"Server running",
 		zap.String("address", config.Address),
 		zap.String("log level", config.LogLevel),
+		zap.String("storage type", storageType),
 	)
 
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
+}
+
+func initStorage(config *Config, log *zap.Logger) (storage repository.Storage, storageType string, err error) {
+	switch {
+	case len(config.DatabaseDSN) > 0:
+		storage, err = repository.NewDatabaseRep(config.DatabaseDSN, log)
+		if err != nil {
+			err = fmt.Errorf("repository init failed: %w", err)
+		}
+
+		storageType = "DB"
+	case len(config.FileStoragePath) > 0:
+		storage = repository.
+			NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, log).
+			WorkerRun()
+
+		storageType = "File"
+	default:
+		storage = repository.NewMemory()
+		storageType = "Memory"
+	}
+
+	return
 }

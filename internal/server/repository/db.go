@@ -7,14 +7,19 @@ import (
 	"time"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
+	"go.uber.org/zap"
 )
 
 type databaseRep struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zap.Logger
 }
 
-func NewDatabaseRep(dsn string) (*databaseRep, error) {
-	rep := &databaseRep{}
+func NewDatabaseRep(dsn string, log *zap.Logger) (*databaseRep, error) {
+	rep := &databaseRep{
+		log: log,
+	}
+
 	if err := rep.connect(dsn); err != nil {
 		return &databaseRep{}, err
 	}
@@ -37,9 +42,9 @@ func (rep *databaseRep) connect(dsn string) error {
 }
 
 func (rep *databaseRep) migrations() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1 * time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
-	
+
 	if err := rep.createTableMetrics(ctx); err != nil {
 		return err
 	}
@@ -76,7 +81,40 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 }
 
 func (rep *databaseRep) Get() map[string]string {
-	return map[string]string{}
+	list := make(map[string]string)
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+	defer cancel()
+
+	query := "SELECT type, name, value, delta FROM metrics ORDER BY type, name ASC"
+	rows, err := rep.db.QueryContext(ctx, query)
+	if err != nil {
+		rep.log.Error("rep db Get failed", zap.Error(err))
+		return map[string]string{}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var m model.Metric
+		err := rows.Scan(&m.MType, &m.ID, &m.Value, &m.Delta)
+		if err != nil {
+			rep.log.Error("rep db Get failed", zap.Error(err))
+			return map[string]string{}
+		}
+
+		switch m.MType {
+		case "counter":
+			list[m.ID] = m.DeltaString()
+		default:
+			list[m.ID] = m.ValueString()
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		rep.log.Error("rep db Get failed", zap.Error(err))
+		return map[string]string{}
+	}
+
+	return list
 }
 
 func (rep *databaseRep) Ping() error {

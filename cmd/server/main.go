@@ -36,7 +36,7 @@ func run() error {
 	// 	NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
 	// 	WorkerRun()
 
-	storage, err := repository.NewDatabaseRep(config.DatabaseDSN)
+	storage, err := repository.NewDatabaseRep(config.DatabaseDSN, cLog)
 	if err != nil {
 		return fmt.Errorf("repository init failed: %w", err)
 	}

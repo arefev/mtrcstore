@@ -64,7 +64,8 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 			"name" varchar NULL,
 			value double precision NULL,
 			delta int NULL,
-			CONSTRAINT metrics_pk PRIMARY KEY (id)
+			CONSTRAINT metrics_pk PRIMARY KEY (id),
+			CONSTRAINT metrics_unique UNIQUE (type, name)
 		);
 	`
 
@@ -94,6 +95,59 @@ func (rep *databaseRep) Save(m model.Metric) error {
 }
 
 func (rep *databaseRep) MassSave(elems []model.Metric) error {
+	const timeCancel = 1 * time.Second
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+	defer cancel()
+
+	tx := rep.db.MustBegin()
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			rep.log.Warn("rep db mass save rollback failed", zap.Error(err))
+		}
+	}()
+
+	query := `
+		INSERT INTO 
+			metrics (type, name, value, delta) 
+		VALUES (:type, :name, :value, :delta) 
+		ON CONFLICT (type, name)
+		DO UPDATE 
+		SET value = EXCLUDED.value, delta = EXCLUDED.delta
+	`
+
+	stmt, err := tx.PrepareNamedContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("rep db mass save failed: %w", err)
+	}
+
+	defer func() {
+		if err := stmt.Close(); err != nil {
+			rep.log.Warn("rep db mass save failed", zap.Error(err))
+		}
+	}()
+
+	for _, m := range elems {
+		_, err := stmt.ExecContext(
+			ctx,
+			map[string]interface{}{
+				"type":  m.MType,
+				"name":  m.ID,
+				"value": m.Value,
+				"delta": m.Delta,
+			},
+		)
+
+		if err != nil {
+			rep.log.Error("rep db mass save failed", zap.Error(err))
+			return fmt.Errorf("rep db mass save failed: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		rep.log.Error("rep db mass save commit failed", zap.Error(err))
+		return fmt.Errorf("rep db mass save commit failed: %w", err)
+	}
+
 	return nil
 }
 

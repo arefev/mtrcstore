@@ -112,5 +112,11 @@ func (s *memory) Ping() error {
 }
 
 func (s *memory) MassSave(elems []model.Metric) error {
+	for _, m := range elems {
+		if err := s.Save(m); err != nil {
+			return fmt.Errorf("mass save failed: %w", err)
+		}
+	}
+
 	return nil
 }

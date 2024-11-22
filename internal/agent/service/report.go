@@ -17,11 +17,12 @@ type Gauge float64
 type Counter int64
 
 const (
-	contentType   = "text/plain"
-	protocol      = "http://"
-	updateURLPath = "update"
-	counterName   = "counter"
-	gaugeName     = "gauge"
+	contentType       = "text/plain"
+	protocol          = "http://"
+	updateURLPath     = "update"
+	massUpdateURLPath = "updates"
+	counterName       = "counter"
+	gaugeName         = "gauge"
 )
 
 type Storage interface {
@@ -33,10 +34,11 @@ type Storage interface {
 }
 
 type Report struct {
-	Storage    Storage
-	ServerHost string
-	updateURL  string
-	client     resty.Client
+	Storage       Storage
+	ServerHost    string
+	updateURL     string
+	massUpdateURL string
+	client        resty.Client
 }
 
 func NewReport(s Storage, host string) (Report, error) {
@@ -45,12 +47,18 @@ func NewReport(s Storage, host string) (Report, error) {
 		return Report{}, fmt.Errorf("NewReport failed: %w", err)
 	}
 
+	massUpdateURL, err := url.JoinPath(protocol+host, massUpdateURLPath)
+	if err != nil {
+		return Report{}, fmt.Errorf("NewReport failed: %w", err)
+	}
+
 	client := resty.New()
 	return Report{
-		Storage:    s,
-		ServerHost: host,
-		updateURL:  updateURL,
-		client:     *client,
+		Storage:       s,
+		ServerHost:    host,
+		updateURL:     updateURL,
+		massUpdateURL: massUpdateURL,
+		client:        *client,
 	}, nil
 }
 
@@ -58,6 +66,32 @@ func (r *Report) Send() {
 	r.sendGauges()
 	r.sendCounters()
 	r.Storage.ClearCounter()
+}
+
+func (r *Report) MassSend() {
+	var metrics []model.Metric
+	for name, val := range r.Storage.GetGauges() {
+		mVal := float64(val)
+		metrics = append(metrics, model.Metric{
+			ID:    name,
+			MType: gaugeName,
+			Value: &mVal,
+		})
+	}
+
+	for name, val := range r.Storage.GetCounters() {
+		mVal := int64(val)
+		metrics = append(metrics, model.Metric{
+			ID:    name,
+			MType: counterName,
+			Delta: &mVal,
+		})
+	}
+
+	r.Storage.ClearCounter()
+	if err := r.massSend(&metrics); err != nil {
+		log.Printf("massSend(): failed to send metrics %+v, %s", metrics, err.Error())
+	}
 }
 
 func (r *Report) Save(memStats *runtime.MemStats) error {
@@ -120,6 +154,30 @@ func (r *Report) send(m *model.Metric) error {
 		SetHeader("Content-Encoding", "gzip").
 		SetBody(body).
 		Post(r.updateURL)
+
+	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Report) massSend(m *[]model.Metric) error {
+	jsonBody, err := json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	body, err := r.compress(jsonBody)
+	if err != nil {
+		return fmt.Errorf("send failed: %w", err)
+	}
+
+	_, err = r.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetBody(body).
+		Post(r.massUpdateURL)
 
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)

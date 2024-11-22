@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	// "github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
 type databaseRep struct {
-	db  *pgxpool.Pool
+	db  *sqlx.DB
 	log *zap.Logger
 }
 
@@ -35,7 +36,7 @@ func NewDatabaseRep(dsn string, log *zap.Logger) (*databaseRep, error) {
 }
 
 func (rep *databaseRep) connect(dsn string) error {
-	db, err := pgxpool.New(context.TODO(), dsn)
+	db, err := sqlx.Connect("pgx", dsn)
 	if err != nil {
 		return fmt.Errorf("db init failed: %w", err)
 	}
@@ -68,7 +69,7 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 		);
 	`
 
-	_, err := rep.db.Exec(ctx, query)
+	_, err := rep.db.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("rep db createTableMetrics failed: %w", err)
 	}
@@ -94,14 +95,14 @@ func (rep *databaseRep) Save(m model.Metric) error {
 }
 
 func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
-	query := "INSERT INTO metrics(type, name, value, delta) VALUES(@type, @name, @value, @delta)"
-	
-	_, err := rep.db.Exec(
+	query := "INSERT INTO metrics(type, name, value, delta) VALUES(:type, :name, :value, :delta)"
+
+	_, err := rep.db.NamedExecContext(
 		ctx,
 		query,
-		pgx.NamedArgs{
-			"type": m.MType,
-			"name": m.ID,
+		map[string]interface{}{
+			"type":  m.MType,
+			"name":  m.ID,
 			"value": m.Value,
 			"delta": m.Delta,
 		},
@@ -115,18 +116,18 @@ func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 }
 
 func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldMetric model.Metric) error {
-	query := "UPDATE metrics SET value = @value, delta = @delta WHERE type = @type AND name = @name"
+	query := "UPDATE metrics SET value = :value, delta = :delta WHERE type = :type AND name = :name"
 	if oldMetric.MType == "counter" {
 		newVal := *oldMetric.Delta + *newMetric.Delta
 		newMetric.Delta = &newVal
 	}
 
-	_, err := rep.db.Exec(
-		ctx, 
-		query, 
-		pgx.NamedArgs{
-			"type": oldMetric.MType,
-			"name": oldMetric.ID,
+	_, err := rep.db.NamedExecContext(
+		ctx,
+		query,
+		map[string]interface{}{
+			"type":  oldMetric.MType,
+			"name":  oldMetric.ID,
 			"value": newMetric.Value,
 			"delta": newMetric.Delta,
 		},
@@ -145,17 +146,9 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
-	query := "SELECT type, name, value, delta FROM metrics WHERE type = @type AND name = @name"
-	row := rep.db.QueryRow(
-		ctx, 
-		query, 
-		pgx.NamedArgs{
-			"type": mType,
-			"name": id,
-		},
-	)
+	query := "SELECT type, name, value, delta FROM metrics WHERE type = $1 AND name = $2"
+	err := rep.db.GetContext(ctx, &metric, query, mType, id)
 
-	err := row.Scan(&metric.MType, &metric.ID, &metric.Value, &metric.Delta)
 	if err != nil {
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
@@ -170,32 +163,21 @@ func (rep *databaseRep) Get() map[string]string {
 	defer cancel()
 
 	query := "SELECT type, name, value, delta FROM metrics ORDER BY type, name ASC"
-	rows, err := rep.db.Query(ctx, query)
+	metrics := []model.Metric{}
+	err := rep.db.SelectContext(ctx, &metrics, query)
+
 	if err != nil {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return map[string]string{}
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var m model.Metric
-		err := rows.Scan(&m.MType, &m.ID, &m.Value, &m.Delta)
-		if err != nil {
-			rep.log.Error("rep db Get failed", zap.Error(err))
-			return map[string]string{}
-		}
-
+	for _, m := range metrics {
 		switch m.MType {
 		case "counter":
 			list[m.ID] = m.DeltaString()
 		default:
 			list[m.ID] = m.ValueString()
 		}
-	}
-
-	if err := rows.Err(); err != nil {
-		rep.log.Error("rep db Get failed", zap.Error(err))
-		return map[string]string{}
 	}
 
 	return list
@@ -205,7 +187,7 @@ func (rep *databaseRep) Ping() error {
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	if err := rep.db.Ping(ctx); err != nil {
+	if err := rep.db.PingContext(ctx); err != nil {
 		return fmt.Errorf("Ping failed: %w", err)
 	}
 

@@ -93,6 +93,10 @@ func (rep *databaseRep) Save(m model.Metric) error {
 	return fmt.Errorf("rep db Save failed: %w", err)
 }
 
+func (rep *databaseRep) MassSave(elems []model.Metric) error {
+	return nil
+}
+
 func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 	query := "INSERT INTO metrics(type, name, value, delta) VALUES(:type, :name, :value, :delta)"
 

@@ -26,5 +26,7 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 		r.Post("/", h.UpdateJSON)
 	})
 
+	r.Post("/updates", h.Updates)
+
 	return r
 }

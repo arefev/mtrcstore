@@ -110,3 +110,7 @@ func (s *memory) Get() map[string]string {
 func (s *memory) Ping() error {
 	return nil
 }
+
+func (s *memory) MassSave(elems []model.Metric) error {
+	return nil
+}

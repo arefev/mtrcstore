@@ -186,3 +186,26 @@ func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *MetricHandlers) Updates(w http.ResponseWriter, r *http.Request) {
+	var metrics []model.Metric
+	d := json.NewDecoder(r.Body)
+
+	w.Header().Add("Content-type", "application/json")
+
+	if err := d.Decode(&metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Storage.MassSave(metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write([]byte("Mass save successful!")); err != nil {
+		h.log.Error("handler Ping metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}

@@ -112,7 +112,7 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		VALUES (:type, :name, :value, :delta) 
 		ON CONFLICT (type, name)
 		DO UPDATE 
-		SET value = EXCLUDED.value, delta = EXCLUDED.delta
+		SET value = EXCLUDED.value, delta = EXCLUDED.delta + metrics.delta
 	`
 
 	stmt, err := tx.PrepareNamedContext(ctx, query)

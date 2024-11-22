@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
 type databaseRep struct {
-	db  *sql.DB
+	db  *pgxpool.Pool
 	log *zap.Logger
 }
 
@@ -33,7 +35,7 @@ func NewDatabaseRep(dsn string, log *zap.Logger) (*databaseRep, error) {
 }
 
 func (rep *databaseRep) connect(dsn string) error {
-	db, err := sql.Open("pgx", dsn)
+	db, err := pgxpool.New(context.TODO(), dsn)
 	if err != nil {
 		return fmt.Errorf("db init failed: %w", err)
 	}
@@ -66,7 +68,7 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 		);
 	`
 
-	_, err := rep.db.ExecContext(ctx, query)
+	_, err := rep.db.Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("rep db createTableMetrics failed: %w", err)
 	}
@@ -92,9 +94,20 @@ func (rep *databaseRep) Save(m model.Metric) error {
 }
 
 func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
-	query := "INSERT INTO metrics(type, name, value, delta) VALUES($1, $2, $3, $4)"
-	_, err := rep.db.ExecContext(ctx, query, m.MType, m.ID, m.Value, m.Delta)
+	query := "INSERT INTO metrics(type, name, value, delta) VALUES(@type, @name, @value, @delta)"
+	
+	_, err := rep.db.Exec(
+		ctx,
+		query,
+		pgx.NamedArgs{
+			"type": m.MType,
+			"name": m.ID,
+			"value": m.Value,
+			"delta": m.Delta,
+		},
+	)
 	if err != nil {
+		rep.log.Error("rep db create failed", zap.Error(err))
 		return fmt.Errorf("rep db create failed: %w", err)
 	}
 
@@ -102,13 +115,23 @@ func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 }
 
 func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldMetric model.Metric) error {
-	query := "UPDATE metrics SET value = $1, delta = $2 WHERE type = $3 AND name = $4"
+	query := "UPDATE metrics SET value = @value, delta = @delta WHERE type = @type AND name = @name"
 	if oldMetric.MType == "counter" {
 		newVal := *oldMetric.Delta + *newMetric.Delta
 		newMetric.Delta = &newVal
 	}
 
-	_, err := rep.db.ExecContext(ctx, query, newMetric.Value, newMetric.Delta, oldMetric.MType, oldMetric.ID)
+	_, err := rep.db.Exec(
+		ctx, 
+		query, 
+		pgx.NamedArgs{
+			"type": oldMetric.MType,
+			"name": oldMetric.ID,
+			"value": newMetric.Value,
+			"delta": newMetric.Delta,
+		},
+	)
+
 	if err != nil {
 		return fmt.Errorf("rep db update failed: %w", err)
 	}
@@ -122,15 +145,17 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
-	query := "SELECT type, name, value, delta FROM metrics WHERE type = $1 AND name = $2"
-	row := rep.db.QueryRowContext(ctx, query, mType, id)
+	query := "SELECT type, name, value, delta FROM metrics WHERE type = @type AND name = @name"
+	row := rep.db.QueryRow(
+		ctx, 
+		query, 
+		pgx.NamedArgs{
+			"type": mType,
+			"name": id,
+		},
+	)
 
-	err := row.Err()
-	if err != nil {
-		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
-	}
-
-	err = row.Scan(&metric.MType, &metric.ID, &metric.Value, &metric.Delta)
+	err := row.Scan(&metric.MType, &metric.ID, &metric.Value, &metric.Delta)
 	if err != nil {
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
@@ -145,16 +170,12 @@ func (rep *databaseRep) Get() map[string]string {
 	defer cancel()
 
 	query := "SELECT type, name, value, delta FROM metrics ORDER BY type, name ASC"
-	rows, err := rep.db.QueryContext(ctx, query)
+	rows, err := rep.db.Query(ctx, query)
 	if err != nil {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return map[string]string{}
 	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			rep.log.Error("rep db Get rows close failed", zap.Error(err))
-		}
-	}()
+	defer rows.Close()
 
 	for rows.Next() {
 		var m model.Metric
@@ -184,7 +205,7 @@ func (rep *databaseRep) Ping() error {
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	if err := rep.db.PingContext(ctx); err != nil {
+	if err := rep.db.Ping(ctx); err != nil {
 		return fmt.Errorf("Ping failed: %w", err)
 	}
 

@@ -10,7 +10,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
-	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"go.uber.org/zap"
 )
 

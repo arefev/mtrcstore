@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -33,17 +32,14 @@ func run() error {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
-	db, err := sql.Open("pgx", config.DatabaseDSN)
-	if err != nil {
-		return fmt.Errorf("db init failed: %w", err)
-	}
-	defer db.Close()
-
 	// storage := repository.
 	// 	NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
 	// 	WorkerRun()
 
-	storage := repository.NewDatabaseRep(db)
+	storage, err := repository.NewDatabaseRep(config.DatabaseDSN)
+	if err != nil {
+		return fmt.Errorf("repository init failed: %w", err)
+	}
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog)

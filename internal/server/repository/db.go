@@ -43,8 +43,8 @@ func (rep *databaseRep) connect(dsn string) error {
 }
 
 func (rep *databaseRep) migrations() error {
-	const timeCancel = time.Duration(1)
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel*time.Second)
+	const timeCancel = 1 * time.Second
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
 	if err := rep.createTableMetrics(ctx); err != nil {
@@ -75,8 +75,8 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 }
 
 func (rep *databaseRep) Save(m model.Metric) error {
-	const timeCancel = time.Duration(1)
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel*time.Second)
+	const timeCancel = 1 * time.Second
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
 	metric, err := rep.Find(m.ID, m.MType)
@@ -104,7 +104,7 @@ func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldMetric model.Metric) error {
 	query := "UPDATE metrics SET value = $1, delta = $2 WHERE type = $3 AND name = $4"
 	if oldMetric.MType == "counter" {
-		newVal := int64(*oldMetric.Delta) + int64(*newMetric.Delta)
+		newVal := *oldMetric.Delta + *newMetric.Delta
 		newMetric.Delta = &newVal
 	}
 
@@ -117,9 +117,9 @@ func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldM
 }
 
 func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
-	const timeCancel = time.Duration(1)
+	const timeCancel = 1 * time.Second
 	metric := model.Metric{}
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
 	query := "SELECT type, name, value, delta FROM metrics WHERE type = $1 AND name = $2"
@@ -139,9 +139,9 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 }
 
 func (rep *databaseRep) Get() map[string]string {
-	const timeCancel = time.Duration(1)
+	const timeCancel = 1 * time.Second
 	list := make(map[string]string)
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
 	query := "SELECT type, name, value, delta FROM metrics ORDER BY type, name ASC"
@@ -150,7 +150,11 @@ func (rep *databaseRep) Get() map[string]string {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return map[string]string{}
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			rep.log.Error("rep db Get rows close failed", zap.Error(err))
+		}
+	}()
 
 	for rows.Next() {
 		var m model.Metric
@@ -180,5 +184,9 @@ func (rep *databaseRep) Ping() error {
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
-	return rep.db.PingContext(ctx)
+	if err := rep.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("Ping failed: %w", err)
+	}
+
+	return nil
 }

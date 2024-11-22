@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -89,7 +90,7 @@ func Test_Get(t *testing.T) {
 func Test_UpdateShortUrl(t *testing.T) {
 	const urlPath string = "/update"
 	var delta int64 = 1
-	var value float64 = 1.55
+	var value = 1.55
 
 	type want struct {
 		metric     model.Metric
@@ -131,7 +132,7 @@ func Test_UpdateShortUrl(t *testing.T) {
 					ID:    "PollCounter",
 					MType: "counter",
 				},
-				err:        fmt.Errorf("saved failed"),
+				err:        errors.New("saved failed"),
 				statusCode: http.StatusBadRequest,
 			},
 		},
@@ -177,7 +178,7 @@ func Test_UpdateShortUrl(t *testing.T) {
 
 func Test_UpdateFullUrl(t *testing.T) {
 	var delta int64 = 1
-	var value float64 = 1
+	var value = 1.55
 
 	type want struct {
 		metric     model.Metric
@@ -211,7 +212,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 					Value: &value,
 				},
 				err:        nil,
-				urlPath:    "/update/gauge/Alloc/1",
+				urlPath:    "/update/gauge/Alloc/1.55",
 				statusCode: http.StatusOK,
 			},
 		},
@@ -237,7 +238,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 					Value: &value,
 				},
 				err:        nil,
-				urlPath:    "/update/test/Alloc/1",
+				urlPath:    "/update/test/Alloc/1.55",
 				statusCode: http.StatusBadRequest,
 			},
 		},
@@ -275,8 +276,8 @@ func Test_UpdateFullUrl(t *testing.T) {
 					MType: "gauge",
 					Value: &value,
 				},
-				err:        fmt.Errorf("saved failed"),
-				urlPath:    "/update/gauge/Alloc/1",
+				err:        errors.New("saved failed"),
+				urlPath:    "/update/gauge/Alloc/1.55",
 				statusCode: http.StatusBadRequest,
 			},
 		},
@@ -315,7 +316,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 func Test_FindShortUrl(t *testing.T) {
 	const urlPath string = "/value"
 	var delta int64 = 1
-	var value float64 = 1.55
+	var value = 1.55
 
 	type want struct {
 		metric     model.Metric
@@ -367,7 +368,7 @@ func Test_FindShortUrl(t *testing.T) {
 					ID:    "PollCounter",
 					MType: "counter",
 				},
-				err:        fmt.Errorf("not found"),
+				err:        errors.New("not found"),
 				statusCode: http.StatusNotFound,
 			},
 		},
@@ -420,7 +421,7 @@ func Test_FindShortUrl(t *testing.T) {
 }
 func Test_FindFullUrl(t *testing.T) {
 	var delta int64 = 1
-	var value float64 = 1.55
+	var value = 1.55
 
 	type want struct {
 		metric     model.Metric
@@ -466,7 +467,7 @@ func Test_FindFullUrl(t *testing.T) {
 					MType: "counter",
 					Delta: &delta,
 				},
-				err:        fmt.Errorf("not found"),
+				err:        errors.New("not found"),
 				urlPath:    "/value/counter/PollCounter",
 				statusCode: http.StatusNotFound,
 			},
@@ -479,7 +480,7 @@ func Test_FindFullUrl(t *testing.T) {
 					MType: "counter",
 					Delta: &delta,
 				},
-				err:        fmt.Errorf("bad request"),
+				err:        errors.New("bad request"),
 				urlPath:    "/value/test/PollCounter",
 				statusCode: http.StatusBadRequest,
 			},

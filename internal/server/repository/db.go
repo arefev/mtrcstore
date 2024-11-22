@@ -63,7 +63,7 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 			"type" varchar NULL,
 			"name" varchar NULL,
 			value double precision NULL,
-			delta int NULL,
+			delta bigint NULL,
 			CONSTRAINT metrics_pk PRIMARY KEY (id),
 			CONSTRAINT metrics_unique UNIQUE (type, name)
 		);

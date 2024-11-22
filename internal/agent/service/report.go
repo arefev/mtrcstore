@@ -20,7 +20,7 @@ const (
 	contentType       = "text/plain"
 	protocol          = "http://"
 	updateURLPath     = "update"
-	massUpdateURLPath = "updates"
+	massUpdateURLPath = "updates/"
 	counterName       = "counter"
 	gaugeName         = "gauge"
 )

@@ -8,6 +8,7 @@ T_SERVER_PORT=8080
 T_FILE_STORAGE_PATH=./storage.json
 USER=CURRENT_UID=$$(id -u):0
 DOCKER_PROJECT_NAME=mtrcstore
+DATABASE_DSN="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=disable"
 
 
 .PHONY: build server-build server server-run server-build agent agent-run agent-build gofmt test
@@ -17,7 +18,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=disable"
+	./cmd/server/server -d=${DATABASE_DSN}
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/
@@ -75,7 +76,7 @@ test-iter10:
 	metricstest -test.v -test.run=^TestIteration10$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
 
 test-iter11:
-	metricstest -test.v -test.run=^TestIteration11$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH}
+	metricstest -test.v -test.run=^TestIteration11$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${T_FILE_STORAGE_PATH} -database-dsn=${DATABASE_DSN}
 
 .PHONY: golangci-lint-run
 golangci-lint-run: _golangci-lint-rm-unformatted-report

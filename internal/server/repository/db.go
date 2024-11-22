@@ -103,6 +103,11 @@ func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 
 func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldMetric model.Metric) error {
 	query := "UPDATE metrics SET value = $1, delta = $2 WHERE type = $3 AND name = $4"
+	if (oldMetric.MType == "counter") {
+		newVal := int64(*oldMetric.Delta) + int64(*newMetric.Delta)
+		newMetric.Delta = &newVal
+	}
+	
 	_, err := rep.db.ExecContext(ctx, query, newMetric.Value, newMetric.Delta, oldMetric.MType, oldMetric.ID)
 	if err != nil {
 		return fmt.Errorf("rep db update failed: %w", err)

@@ -89,6 +89,11 @@ func (r *Report) MassSend() {
 	}
 
 	r.Storage.ClearCounter()
+
+	if len(metrics) == 0 {
+		return
+	}
+	
 	if err := r.massSend(&metrics); err != nil {
 		log.Printf("massSend(): failed to send metrics %+v, %s", metrics, err.Error())
 	}

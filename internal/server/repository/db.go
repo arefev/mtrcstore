@@ -95,6 +95,10 @@ func (rep *databaseRep) Save(m model.Metric) error {
 }
 
 func (rep *databaseRep) MassSave(elems []model.Metric) error {
+	if len(elems) == 0 {
+		return nil
+	}
+	
 	const timeCancel = 1 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()

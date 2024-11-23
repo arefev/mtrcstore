@@ -83,15 +83,15 @@ func (rep *databaseRep) Save(m model.Metric) error {
 	defer cancel()
 
 	metric, err := rep.Find(m.ID, m.MType)
-	notFound := errors.Is(err, sql.ErrNoRows)
 
-	if notFound {
-		return rep.create(ctx, m)
-	} else if err == nil {
+	switch {
+	case err == nil:
 		return rep.update(ctx, m, metric)
+	case errors.Is(err, sql.ErrNoRows):
+		return rep.create(ctx, m)
+	default:
+		return fmt.Errorf("rep db Save failed: %w", err)
 	}
-
-	return fmt.Errorf("rep db Save failed: %w", err)
 }
 
 func (rep *databaseRep) MassSave(elems []model.Metric) error {

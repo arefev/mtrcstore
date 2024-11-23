@@ -16,15 +16,6 @@ import (
 type Gauge float64
 type Counter int64
 
-const (
-	contentType       = "text/plain"
-	protocol          = "http://"
-	updateURLPath     = "update"
-	massUpdateURLPath = "updates/"
-	counterName       = "counter"
-	gaugeName         = "gauge"
-)
-
 type Storage interface {
 	Save(memStats *runtime.MemStats) error
 	IncrementCounter()
@@ -33,48 +24,59 @@ type Storage interface {
 	GetCounters() map[string]Counter
 }
 
-type Report struct {
+type report struct {
 	Storage       Storage
-	ServerHost    string
 	updateURL     string
 	massUpdateURL string
+	gaugeName     string
+	counterName   string
 	client        resty.Client
 }
 
-func NewReport(s Storage, host string) (Report, error) {
+func NewReport(s Storage, host string) (report, error) {
+	const (
+		contentType       = "text/plain"
+		protocol          = "http://"
+		updateURLPath     = "update"
+		massUpdateURLPath = "updates/"
+		counterName       = "counter"
+		gaugeName         = "gauge"
+	)
+
 	updateURL, err := url.JoinPath(protocol+host, updateURLPath)
 	if err != nil {
-		return Report{}, fmt.Errorf("NewReport failed: %w", err)
+		return report{}, fmt.Errorf("NewReport failed: %w", err)
 	}
 
 	massUpdateURL, err := url.JoinPath(protocol+host, massUpdateURLPath)
 	if err != nil {
-		return Report{}, fmt.Errorf("NewReport failed: %w", err)
+		return report{}, fmt.Errorf("NewReport failed: %w", err)
 	}
 
 	client := resty.New()
-	return Report{
+	return report{
 		Storage:       s,
-		ServerHost:    host,
 		updateURL:     updateURL,
 		massUpdateURL: massUpdateURL,
+		gaugeName:     gaugeName,
+		counterName:   counterName,
 		client:        *client,
 	}, nil
 }
 
-func (r *Report) Send() {
+func (r *report) Send() {
 	r.sendGauges()
 	r.sendCounters()
 	r.Storage.ClearCounter()
 }
 
-func (r *Report) MassSend() {
+func (r *report) MassSend() {
 	var metrics []model.Metric
 	for name, val := range r.Storage.GetGauges() {
 		mVal := float64(val)
 		metrics = append(metrics, model.Metric{
 			ID:    name,
-			MType: gaugeName,
+			MType: r.gaugeName,
 			Value: &mVal,
 		})
 	}
@@ -83,7 +85,7 @@ func (r *Report) MassSend() {
 		mVal := int64(val)
 		metrics = append(metrics, model.Metric{
 			ID:    name,
-			MType: counterName,
+			MType: r.counterName,
 			Delta: &mVal,
 		})
 	}
@@ -93,13 +95,13 @@ func (r *Report) MassSend() {
 	if len(metrics) == 0 {
 		return
 	}
-	
-	if err := r.massSend(&metrics); err != nil {
+
+	if err := r.request(metrics, r.massUpdateURL); err != nil {
 		log.Printf("massSend(): failed to send metrics %+v, %s", metrics, err.Error())
 	}
 }
 
-func (r *Report) Save(memStats *runtime.MemStats) error {
+func (r *report) Save(memStats *runtime.MemStats) error {
 	if err := r.Storage.Save(memStats); err != nil {
 		return fmt.Errorf("report save(): metrics save failed: %w", err)
 	}
@@ -107,44 +109,44 @@ func (r *Report) Save(memStats *runtime.MemStats) error {
 	return nil
 }
 
-func (r *Report) IncrementCounter() {
+func (r *report) IncrementCounter() {
 	r.Storage.IncrementCounter()
 }
 
-func (r *Report) sendGauges() {
+func (r *report) sendGauges() {
 	for name, val := range r.Storage.GetGauges() {
 		mVal := float64(val)
 		metric := model.Metric{
 			ID:    name,
-			MType: gaugeName,
+			MType: r.gaugeName,
 			Value: &mVal,
 		}
 
-		if err := r.send(&metric); err != nil {
-			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", gaugeName, err.Error())
+		if err := r.request(metric, r.updateURL); err != nil {
+			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", r.gaugeName, err.Error())
 			continue
 		}
 	}
 }
 
-func (r *Report) sendCounters() {
+func (r *report) sendCounters() {
 	for name, val := range r.Storage.GetCounters() {
 		mVal := int64(val)
 		metric := model.Metric{
 			ID:    name,
-			MType: counterName,
+			MType: r.counterName,
 			Delta: &mVal,
 		}
 
-		if err := r.send(&metric); err != nil {
-			log.Printf("sendCounters(): failed to send the counter metric %s: %s", counterName, err.Error())
+		if err := r.request(metric, r.updateURL); err != nil {
+			log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
 			continue
 		}
 	}
 }
 
-func (r *Report) send(m *model.Metric) error {
-	jsonBody, err := json.Marshal(m)
+func (r *report) request(data any, url string) error {
+	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
 	}
@@ -158,7 +160,7 @@ func (r *Report) send(m *model.Metric) error {
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
 		SetBody(body).
-		Post(r.updateURL)
+		Post(url)
 
 	if err != nil {
 		return fmt.Errorf("send failed: %w", err)
@@ -167,31 +169,7 @@ func (r *Report) send(m *model.Metric) error {
 	return nil
 }
 
-func (r *Report) massSend(m *[]model.Metric) error {
-	jsonBody, err := json.Marshal(m)
-	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
-	}
-
-	body, err := r.compress(jsonBody)
-	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
-	}
-
-	_, err = r.client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetBody(body).
-		Post(r.massUpdateURL)
-
-	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
-	}
-
-	return nil
-}
-
-func (r *Report) compress(p []byte) (*bytes.Buffer, error) {
+func (r *report) compress(p []byte) (*bytes.Buffer, error) {
 	var err error
 	body := bytes.NewBuffer(nil)
 	w := gzip.NewWriter(body)

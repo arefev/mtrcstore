@@ -27,7 +27,7 @@ func NewDatabaseRep(dsn string, log *zap.Logger) (*databaseRep, error) {
 		return &databaseRep{}, err
 	}
 
-	if err := rep.migrations(); err != nil {
+	if err := rep.bootstrap(); err != nil {
 		return &databaseRep{}, err
 	}
 
@@ -44,7 +44,7 @@ func (rep *databaseRep) connect(dsn string) error {
 	return nil
 }
 
-func (rep *databaseRep) migrations() error {
+func (rep *databaseRep) bootstrap() error {
 	const timeCancel = 1 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
@@ -98,7 +98,7 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 	if len(elems) == 0 {
 		return nil
 	}
-	
+
 	const timeCancel = 1 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()

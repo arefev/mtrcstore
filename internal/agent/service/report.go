@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
+	"github.com/arefev/mtrcstore/internal/retry"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -96,8 +99,12 @@ func (r *report) MassSend() {
 		return
 	}
 
-	if err := r.request(metrics, r.massUpdateURL); err != nil {
-		log.Printf("massSend(): failed to send metrics %+v, %s", metrics, err.Error())
+	action := func() error {
+		return r.request(metrics, r.massUpdateURL)
+	}
+
+	if err := retry.New(action, r.isConnRefused, 3).Run(); err != nil {
+		log.Printf("massSend(): failed to send metrics, %s", err.Error())
 	}
 }
 
@@ -182,4 +189,9 @@ func (r *report) compress(p []byte) (*bytes.Buffer, error) {
 	}
 
 	return body, nil
+}
+
+func (r *report) isConnRefused(err error) bool {
+	var netErr *net.OpError
+	return errors.As(err, &netErr) && netErr.Op == "dial" && netErr.Err.Error() == "connect: connection refused"
 }

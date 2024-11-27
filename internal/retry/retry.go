@@ -5,17 +5,17 @@ import (
 	"time"
 )
 
-type action func() error
+type Action func() error
 type checkErr func(err error) bool
 
 type retry struct {
-	action   action
+	action   Action
 	checkErr checkErr
 	attempt  uint
 	max      uint
 }
 
-func New(action action, checkErr checkErr, count uint) *retry {
+func New(action Action, checkErr checkErr, count uint) *retry {
 	return &retry{
 		attempt:  1,
 		checkErr: checkErr,

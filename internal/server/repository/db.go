@@ -17,6 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	retryCount = 3
+	timeCancel = 15 * time.Second
+)
+
 type databaseRep struct {
 	db  *sqlx.DB
 	log *zap.Logger
@@ -49,7 +54,6 @@ func (rep *databaseRep) connect(dsn string) error {
 }
 
 func (rep *databaseRep) bootstrap() error {
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
@@ -57,8 +61,8 @@ func (rep *databaseRep) bootstrap() error {
 		return rep.createTableMetrics(ctx)
 	}
 
-	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
-		return err
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
+		return fmt.Errorf("bootstrap failed: %w", err)
 	}
 
 	return nil
@@ -86,24 +90,30 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 }
 
 func (rep *databaseRep) Save(m model.Metric) error {
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
 	metric, err := rep.Find(m.ID, m.MType)
+	var action retry.Action
 
 	switch {
 	case err == nil:
-		return retry.New(func() error {
+		action = func() error {
 			return rep.update(ctx, m, metric)
-		}, rep.canRetry, 3).Run()
+		}
 	case errors.Is(err, sql.ErrNoRows):
-		return retry.New(func() error {
+		action = func() error {
 			return rep.create(ctx, m)
-		}, rep.canRetry, 3).Run()
+		}
 	default:
 		return fmt.Errorf("rep db Save failed: %w", err)
 	}
+
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
+		return fmt.Errorf("rep db Save failed: %w", err)
+	}
+
+	return nil
 }
 
 func (rep *databaseRep) MassSave(elems []model.Metric) error {
@@ -111,7 +121,6 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		return nil
 	}
 
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
@@ -166,7 +175,7 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		return tx.Commit()
 	}
 
-	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
 		rep.log.Error("rep db mass save commit failed", zap.Error(err))
 		return fmt.Errorf("rep db mass save commit failed: %w", err)
 	}
@@ -223,7 +232,6 @@ func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldM
 }
 
 func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 	metric := model.Metric{}
@@ -233,7 +241,7 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 		return rep.db.GetContext(ctx, &metric, query, mType, id)
 	}
 
-	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
@@ -242,7 +250,6 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 }
 
 func (rep *databaseRep) Get() map[string]string {
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 	list := make(map[string]string)
@@ -254,7 +261,7 @@ func (rep *databaseRep) Get() map[string]string {
 		return rep.db.SelectContext(ctx, &metrics, query)
 	}
 
-	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return map[string]string{}
 	}
@@ -272,7 +279,6 @@ func (rep *databaseRep) Get() map[string]string {
 }
 
 func (rep *databaseRep) Ping() error {
-	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
@@ -280,7 +286,7 @@ func (rep *databaseRep) Ping() error {
 		return rep.db.PingContext(ctx)
 	}
 
-	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+	if err := retry.New(action, rep.canRetry, retryCount).Run(); err != nil {
 		rep.log.Error("ping DB failed", zap.Error(err))
 		return fmt.Errorf("Ping DB failed: %w", err)
 	}

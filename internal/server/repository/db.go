@@ -298,13 +298,11 @@ func (rep *databaseRep) canRetry(err error) bool {
 	var connError *pgconn.ConnectError
 	var pgError *pgconn.PgError
 
-	isConnErr := errors.As(err, &connError)
-	if isConnErr {
+	if errors.As(err, &connError) {
 		return true
 	}
 
-	isPgErr := errors.As(err, &pgError)
-	if isPgErr {
+	if errors.As(err, &pgError) {
 		return pgerrcode.IsConnectionException(pgError.Code)
 	}
 

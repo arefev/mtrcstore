@@ -53,6 +53,10 @@ func (rep *databaseRep) connect(dsn string) error {
 	return nil
 }
 
+func (rep *databaseRep) Close() error {
+	return rep.db.Close()
+}
+
 func (rep *databaseRep) bootstrap() error {
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()

@@ -36,6 +36,10 @@ func NewMemory() *memory {
 	}
 }
 
+func (s *memory) Close() error {
+	return nil
+}
+
 func (s *memory) Save(m model.Metric) error {
 	switch m.MType {
 	case CounterName:

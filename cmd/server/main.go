@@ -39,6 +39,12 @@ func run() error {
 		return fmt.Errorf("main run failed: %w", err)
 	}
 
+	defer func() {
+		if err := storage.Close(); err != nil {
+			cLog.Error("storage close failed: %w", zap.Error(err))
+		}
+	}()
+
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog)
 

@@ -9,10 +9,10 @@ type action func() error
 type checkErr func(err error) bool
 
 type retry struct {
-	attempt  uint
-	max      uint
 	action   action
 	checkErr checkErr
+	attempt  uint
+	max      uint
 }
 
 func New(action action, checkErr checkErr, count uint) *retry {

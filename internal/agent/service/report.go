@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/url"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
@@ -46,21 +45,11 @@ func NewReport(s Storage, host string) (report, error) {
 		gaugeName         = "gauge"
 	)
 
-	updateURL, err := url.JoinPath(protocol+host, updateURLPath)
-	if err != nil {
-		return report{}, fmt.Errorf("NewReport failed: %w", err)
-	}
-
-	massUpdateURL, err := url.JoinPath(protocol+host, massUpdateURLPath)
-	if err != nil {
-		return report{}, fmt.Errorf("NewReport failed: %w", err)
-	}
-
-	client := resty.New()
+	client := resty.New().SetBaseURL(protocol + host)
 	return report{
 		Storage:       s,
-		updateURL:     updateURL,
-		massUpdateURL: massUpdateURL,
+		updateURL:     updateURLPath,
+		massUpdateURL: massUpdateURLPath,
 		gaugeName:     gaugeName,
 		counterName:   counterName,
 		client:        *client,
@@ -74,7 +63,8 @@ func (r *report) Send() {
 }
 
 func (r *report) MassSend() {
-	var metrics []model.Metric
+	const retryCount = 3
+	metrics := make([]model.Metric, 0)
 	for name, val := range r.Storage.GetGauges() {
 		mVal := float64(val)
 		metrics = append(metrics, model.Metric{
@@ -103,7 +93,7 @@ func (r *report) MassSend() {
 		return r.request(metrics, r.massUpdateURL)
 	}
 
-	if err := retry.New(action, r.isConnRefused, 3).Run(); err != nil {
+	if err := retry.New(action, r.isConnRefused, retryCount).Run(); err != nil {
 		log.Printf("massSend(): failed to send metrics, %s", err.Error())
 	}
 }

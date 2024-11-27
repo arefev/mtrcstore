@@ -54,7 +54,10 @@ func (rep *databaseRep) connect(dsn string) error {
 }
 
 func (rep *databaseRep) Close() error {
-	return rep.db.Close()
+	if err := rep.db.Close(); err != nil {
+		return fmt.Errorf("db close failed: %w", err)
+	}
+	return nil
 }
 
 func (rep *databaseRep) bootstrap() error {

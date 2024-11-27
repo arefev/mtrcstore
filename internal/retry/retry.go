@@ -15,32 +15,39 @@ type retry struct {
 	checkErr checkErr
 }
 
-func New(action action, checkErr checkErr, max uint) *retry {
+func New(action action, checkErr checkErr, count uint) *retry {
 	return &retry{
-		attempt:  0,
+		attempt:  1,
 		checkErr: checkErr,
-		max:      max,
+		max:      count,
 		action:   action,
 	}
 }
 
 func (r *retry) Run() error {
-	err := r.action()
-	if err != nil && r.checkErr(err) && r.attempt < (r.max-1) {
-		r.wait().Run()
-		return fmt.Errorf("attempts: %d, %w", (r.attempt + 1), err)
+	var err error
+	for r.attempt <= r.max {
+		err = r.action()
+		if err == nil || !r.checkErr(err) || r.attempt == r.max {
+			break
+		}
+
+		r.wait()
 	}
 
-	return err
+	if err != nil {
+		return fmt.Errorf("attempts: %d, %w", r.attempt, err)
+	}
+
+	return nil
 }
 
-func (r *retry) wait() *retry {
+func (r *retry) wait() {
 	time.Sleep(r.increment())
-	return r
 }
 
 func (r *retry) increment() time.Duration {
-	d := (1 + 2*time.Duration(r.attempt)) * time.Second
+	d := (1 + 2*time.Duration(r.attempt-1)) * time.Second
 	r.attempt++
 	return d
 }

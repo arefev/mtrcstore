@@ -7,9 +7,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arefev/mtrcstore/internal/retry"
 	"github.com/arefev/mtrcstore/internal/server/model"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+
+	// "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -45,11 +50,15 @@ func (rep *databaseRep) connect(dsn string) error {
 }
 
 func (rep *databaseRep) bootstrap() error {
-	const timeCancel = 1 * time.Second
+	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
-	if err := rep.createTableMetrics(ctx); err != nil {
+	action := func() error {
+		return rep.createTableMetrics(ctx)
+	}
+
+	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
 		return err
 	}
 
@@ -78,7 +87,7 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 }
 
 func (rep *databaseRep) Save(m model.Metric) error {
-	const timeCancel = 1 * time.Second
+	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
@@ -86,9 +95,13 @@ func (rep *databaseRep) Save(m model.Metric) error {
 
 	switch {
 	case err == nil:
-		return rep.update(ctx, m, metric)
+		return retry.New(func() error {
+			return rep.update(ctx, m, metric)
+		}, rep.canRetry, 3).Run()
 	case errors.Is(err, sql.ErrNoRows):
-		return rep.create(ctx, m)
+		return retry.New(func() error {
+			return rep.create(ctx, m)
+		}, rep.canRetry, 3).Run()
 	default:
 		return fmt.Errorf("rep db Save failed: %w", err)
 	}
@@ -99,18 +112,23 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		return nil
 	}
 
-	const timeCancel = 1 * time.Second
+	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
-	tx := rep.db.MustBegin()
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			rep.log.Warn("rep db mass save rollback failed", zap.Error(err))
+	action := func() error {
+		tx, err := rep.db.Beginx()
+		if err != nil {
+			return fmt.Errorf("rep db mass save begin transaction failed: %w", err)
 		}
-	}()
 
-	query := `
+		defer func() {
+			if err := tx.Rollback(); err != nil {
+				rep.log.Warn("rep db mass save rollback failed", zap.Error(err))
+			}
+		}()
+
+		query := `
 		INSERT INTO 
 			metrics (type, name, value, delta) 
 		VALUES (:type, :name, :value, :delta) 
@@ -119,35 +137,37 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		SET value = EXCLUDED.value, delta = EXCLUDED.delta + metrics.delta
 	`
 
-	stmt, err := tx.PrepareNamedContext(ctx, query)
-	if err != nil {
-		return fmt.Errorf("rep db mass save failed: %w", err)
-	}
-
-	defer func() {
-		if err := stmt.Close(); err != nil {
-			rep.log.Warn("rep db mass save failed", zap.Error(err))
-		}
-	}()
-
-	for _, m := range elems {
-		_, err := stmt.ExecContext(
-			ctx,
-			map[string]interface{}{
-				"type":  m.MType,
-				"name":  m.ID,
-				"value": m.Value,
-				"delta": m.Delta,
-			},
-		)
-
+		stmt, err := tx.PrepareNamedContext(ctx, query)
 		if err != nil {
-			rep.log.Error("rep db mass save failed", zap.Error(err))
 			return fmt.Errorf("rep db mass save failed: %w", err)
 		}
+
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				rep.log.Warn("rep db mass save failed", zap.Error(err))
+			}
+		}()
+
+		for _, m := range elems {
+			_, err := stmt.ExecContext(
+				ctx,
+				map[string]interface{}{
+					"type":  m.MType,
+					"name":  m.ID,
+					"value": m.Value,
+					"delta": m.Delta,
+				},
+			)
+
+			if err != nil {
+				rep.log.Error("rep db mass save failed", zap.Error(err))
+				return fmt.Errorf("rep db mass save failed: %w", err)
+			}
+		}
+		return tx.Commit()
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
 		rep.log.Error("rep db mass save commit failed", zap.Error(err))
 		return fmt.Errorf("rep db mass save commit failed: %w", err)
 	}
@@ -168,6 +188,7 @@ func (rep *databaseRep) create(ctx context.Context, m model.Metric) error {
 			"delta": m.Delta,
 		},
 	)
+
 	if err != nil {
 		rep.log.Error("rep db create failed", zap.Error(err))
 		return fmt.Errorf("rep db create failed: %w", err)
@@ -195,6 +216,7 @@ func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldM
 	)
 
 	if err != nil {
+		rep.log.Error("rep db update failed", zap.Error(err))
 		return fmt.Errorf("rep db update failed: %w", err)
 	}
 
@@ -202,15 +224,18 @@ func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldM
 }
 
 func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
-	const timeCancel = 1 * time.Second
-	metric := model.Metric{}
+	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
-
+	metric := model.Metric{}
 	query := "SELECT type, name, value, delta FROM metrics WHERE type = $1 AND name = $2"
-	err := rep.db.GetContext(ctx, &metric, query, mType, id)
 
-	if err != nil {
+	action := func() error {
+		return rep.db.GetContext(ctx, &metric, query, mType, id)
+	}
+
+	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+		rep.log.Error("rep db Get failed", zap.Error(err))
 		return model.Metric{}, fmt.Errorf("rep db Find failed: %w", err)
 	}
 
@@ -218,16 +243,19 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 }
 
 func (rep *databaseRep) Get() map[string]string {
-	const timeCancel = 1 * time.Second
-	list := make(map[string]string)
+	const timeCancel = 15 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
+	list := make(map[string]string)
 
 	query := "SELECT type, name, value, delta FROM metrics ORDER BY type, name ASC"
 	metrics := []model.Metric{}
-	err := rep.db.SelectContext(ctx, &metrics, query)
 
-	if err != nil {
+	action := func() error {
+		return rep.db.SelectContext(ctx, &metrics, query)
+	}
+
+	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
 		rep.log.Error("rep db Get failed", zap.Error(err))
 		return map[string]string{}
 	}
@@ -245,12 +273,35 @@ func (rep *databaseRep) Get() map[string]string {
 }
 
 func (rep *databaseRep) Ping() error {
-	ctx, cancel := context.WithCancel(context.TODO())
+	const timeCancel = 15 * time.Second
+	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
 	defer cancel()
 
-	if err := rep.db.PingContext(ctx); err != nil {
-		return fmt.Errorf("Ping failed: %w", err)
+	action := func() error {
+		return rep.db.PingContext(ctx)
+	}
+
+	if err := retry.New(action, rep.canRetry, 3).Run(); err != nil {
+		rep.log.Error("ping DB failed", zap.Error(err))
+		return fmt.Errorf("Ping DB failed: %w", err)
 	}
 
 	return nil
+}
+
+func (rep *databaseRep) canRetry(err error) bool {
+	var connError *pgconn.ConnectError
+	var pgError *pgconn.PgError
+
+	isConnErr := errors.As(err, &connError)
+	if isConnErr {
+		return true
+	}
+
+	isPgErr := errors.As(err, &pgError)
+	if isPgErr {
+		return pgerrcode.IsConnectionException(pgError.Code)
+	}
+
+	return false
 }

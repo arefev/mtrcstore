@@ -79,8 +79,8 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS public.metrics (
 			id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-			"type" varchar NULL,
-			"name" varchar NULL,
+			"type" varchar NOT NULL,
+			"name" varchar NOT NULL,
 			value double precision NULL,
 			delta bigint NULL,
 			CONSTRAINT metrics_pk PRIMARY KEY (id),

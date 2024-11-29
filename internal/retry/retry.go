@@ -34,7 +34,6 @@ func (r *retry) Run() error {
 
 		r.wait()
 		r.attempt++
-
 	}
 
 	if err != nil {

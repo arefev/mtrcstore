@@ -9,7 +9,7 @@ import (
 
 type Reporter interface {
 	Send()
-	MassSend()
+	MassSend() error
 	Save(memStats *runtime.MemStats) error
 	IncrementCounter()
 }
@@ -38,7 +38,9 @@ func (w *Worker) Run() error {
 		if period >= w.ReportInterval {
 			log.Printf("Run report after %d seconds", period)
 
-			w.Report.MassSend()
+			if err := w.Report.MassSend(); err != nil {
+				return fmt.Errorf("worker failed: %w", err)
+			}
 			start = time.Now()
 		}
 	}

@@ -62,7 +62,7 @@ func (r *report) Send() {
 	r.Storage.ClearCounter()
 }
 
-func (r *report) MassSend() {
+func (r *report) MassSend() error {
 	const retryCount = 3
 	metrics := make([]model.Metric, 0)
 	for name, val := range r.Storage.GetGauges() {
@@ -86,7 +86,7 @@ func (r *report) MassSend() {
 	r.Storage.ClearCounter()
 
 	if len(metrics) == 0 {
-		return
+		return nil
 	}
 
 	action := func() error {
@@ -94,8 +94,10 @@ func (r *report) MassSend() {
 	}
 
 	if err := retry.New(action, r.isConnRefused, retryCount).Run(); err != nil {
-		log.Printf("massSend(): failed to send metrics, %s", err.Error())
+		return fmt.Errorf("massSend(): failed to send metrics, %w", err)
 	}
+
+	return nil
 }
 
 func (r *report) Save(memStats *runtime.MemStats) error {
@@ -145,12 +147,12 @@ func (r *report) sendCounters() {
 func (r *report) request(data any, url string) error {
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
+		return fmt.Errorf("request failed: %w", err)
 	}
 
 	body, err := r.compress(jsonBody)
 	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
+		return fmt.Errorf("request failed: %w", err)
 	}
 
 	_, err = r.client.R().
@@ -160,7 +162,7 @@ func (r *report) request(data any, url string) error {
 		Post(url)
 
 	if err != nil {
-		return fmt.Errorf("send failed: %w", err)
+		return fmt.Errorf("request failed: %w", err)
 	}
 
 	return nil

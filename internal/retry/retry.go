@@ -17,7 +17,7 @@ type retry struct {
 
 func New(action Action, checkErr CheckErr, count uint) *retry {
 	return &retry{
-		attempt:  1,
+		attempt:  0,
 		checkErr: checkErr,
 		max:      count,
 		action:   action,
@@ -26,14 +26,13 @@ func New(action Action, checkErr CheckErr, count uint) *retry {
 
 func (r *retry) Run() error {
 	var err error
-	for {
+	for ; r.attempt < r.max; r.attempt++ {
+		r.wait()
+
 		err = r.action()
-		if err == nil || !r.checkErr(err) || r.attempt >= r.max {
+		if err == nil || !r.checkErr(err) {
 			break
 		}
-
-		r.wait()
-		r.attempt++
 	}
 
 	if err != nil {
@@ -44,7 +43,10 @@ func (r *retry) Run() error {
 }
 
 func (r *retry) wait() {
-	time.Sleep(r.duration())
+	d := r.duration()
+	if d > 0 {
+		time.Sleep(d)
+	}
 }
 
 func (r *retry) duration() time.Duration {

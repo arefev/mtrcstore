@@ -6,16 +6,16 @@ import (
 )
 
 type Action func() error
-type checkErr func(err error) bool
+type CheckErr func(err error) bool
 
 type retry struct {
 	action   Action
-	checkErr checkErr
+	checkErr CheckErr
 	attempt  uint
 	max      uint
 }
 
-func New(action Action, checkErr checkErr, count uint) *retry {
+func New(action Action, checkErr CheckErr, count uint) *retry {
 	return &retry{
 		attempt:  1,
 		checkErr: checkErr,

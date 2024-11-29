@@ -146,13 +146,14 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		}()
 
 		query := `
-		INSERT INTO 
-			metrics (type, name, value, delta) 
-		VALUES (:type, :name, :value, :delta) 
-		ON CONFLICT (type, name)
-		DO UPDATE 
-		SET value = EXCLUDED.value, delta = EXCLUDED.delta + metrics.delta
-	`
+			MERGE INTO public.metrics AS t
+			USING (VALUES (:type, :name)) AS s (type, name)
+			ON s.type = t.type AND s.name = t.name
+			WHEN NOT MATCHED THEN
+			INSERT (type, name, value, delta) VALUES (:type, :name, :value, :delta)
+			WHEN MATCHED THEN
+			UPDATE SET value = :value, delta = :delta + t.delta;
+		`
 
 		stmt, err := tx.PrepareNamedContext(ctx, query)
 		if err != nil {

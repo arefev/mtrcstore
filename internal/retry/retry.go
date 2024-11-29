@@ -31,10 +31,10 @@ func (r *retry) Run() error {
 		if err == nil || !r.checkErr(err) || r.attempt >= r.max {
 			break
 		}
-		
+
 		r.wait()
 		r.attempt++
-		
+
 	}
 
 	if err != nil {

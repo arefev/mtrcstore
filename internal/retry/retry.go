@@ -33,6 +33,7 @@ func (r *retry) Run() error {
 		}
 
 		r.wait()
+		r.attempt++
 	}
 
 	if err != nil {
@@ -43,11 +44,9 @@ func (r *retry) Run() error {
 }
 
 func (r *retry) wait() {
-	time.Sleep(r.increment())
+	time.Sleep(r.duration())
 }
 
-func (r *retry) increment() time.Duration {
-	d := (1 + 2*time.Duration(r.attempt-1)) * time.Second
-	r.attempt++
-	return d
+func (r *retry) duration() time.Duration {
+	return (1 + 2*time.Duration(r.attempt-1)) * time.Second
 }

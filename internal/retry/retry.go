@@ -26,14 +26,15 @@ func New(action Action, checkErr CheckErr, count uint) *retry {
 
 func (r *retry) Run() error {
 	var err error
-	for r.attempt <= r.max {
+	for {
 		err = r.action()
-		if err == nil || !r.checkErr(err) || r.attempt == r.max {
+		if err == nil || !r.checkErr(err) || r.attempt >= r.max {
 			break
 		}
-
+		
 		r.wait()
 		r.attempt++
+		
 	}
 
 	if err != nil {

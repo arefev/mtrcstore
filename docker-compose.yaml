@@ -1,9 +1,7 @@
-version: '3.9'
-
 services:
 
   mtrcstore-db:
-    image: postgres
+    image: postgres:17.2
     container_name: mtrcstore_db
     restart: always
     ports:

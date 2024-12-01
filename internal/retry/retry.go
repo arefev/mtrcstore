@@ -43,12 +43,12 @@ func (r *retry) Run() error {
 }
 
 func (r *retry) wait() {
-	d := r.duration()
+	d := r.getDuration()
 	if d > 0 {
 		time.Sleep(d)
 	}
 }
 
-func (r *retry) duration() time.Duration {
+func (r *retry) getDuration() time.Duration {
 	return (1 + 2*time.Duration(r.attempt-1)) * time.Second
 }

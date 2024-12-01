@@ -58,7 +58,11 @@ func run() error {
 	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
 }
 
-func initStorage(config *Config, cLog *zap.Logger) (storage repository.Storage, storageType string, err error) {
+func initStorage(config *Config, cLog *zap.Logger) (repository.Storage, string, error) {
+	var storage repository.Storage
+	var storageType string
+	var err error
+
 	switch {
 	case len(config.DatabaseDSN) > 0:
 		storage, err = repository.NewDatabaseRep(config.DatabaseDSN, cLog)
@@ -78,5 +82,5 @@ func initStorage(config *Config, cLog *zap.Logger) (storage repository.Storage, 
 		storageType = "Memory"
 	}
 
-	return
+	return storage, storageType, err
 }

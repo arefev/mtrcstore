@@ -40,12 +40,17 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	delta := int64(mValue)
 	metric := model.Metric{
 		ID:    mName,
 		MType: mType,
-		Value: &mValue,
-		Delta: &delta,
+	}
+
+	switch mType {
+	case repository.CounterName:
+		delta := int64(mValue)
+		metric.Delta = &delta
+	default:
+		metric.Value = &mValue
 	}
 
 	if err := h.Storage.Save(metric); err != nil {
@@ -167,4 +172,38 @@ func (h *MetricHandlers) checkType(t string) error {
 	}
 
 	return nil
+}
+
+func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
+	if err := h.Storage.Ping(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := w.Write([]byte("DB connected!")); err != nil {
+		h.log.Error("handler Ping metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *MetricHandlers) Updates(w http.ResponseWriter, r *http.Request) {
+	var metrics []model.Metric
+	d := json.NewDecoder(r.Body)
+
+	if err := d.Decode(&metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Storage.MassSave(metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _, err := w.Write([]byte("Mass save successful!")); err != nil {
+		h.log.Error("handler Updates metrics: response writer failed", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }

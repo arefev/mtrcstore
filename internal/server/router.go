@@ -14,6 +14,7 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 	r.Use(m.Compress)
 
 	r.Get("/", h.Get)
+	r.Get("/ping", h.Ping)
 
 	r.Route("/value", func(r chi.Router) {
 		r.Get("/{type}/{name}", h.Find)
@@ -24,6 +25,8 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 		r.Post("/{type}/{name}/{value}", h.Update)
 		r.Post("/", h.UpdateJSON)
 	})
+
+	r.Post("/updates/", h.Updates)
 
 	return r
 }

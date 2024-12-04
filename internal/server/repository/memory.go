@@ -36,6 +36,10 @@ func NewMemory() *memory {
 	}
 }
 
+func (s *memory) Close() error {
+	return nil
+}
+
 func (s *memory) Save(m model.Metric) error {
 	switch m.MType {
 	case CounterName:
@@ -105,4 +109,18 @@ func (s *memory) Get() map[string]string {
 	}
 
 	return all
+}
+
+func (s *memory) Ping() error {
+	return nil
+}
+
+func (s *memory) MassSave(elems []model.Metric) error {
+	for _, m := range elems {
+		if err := s.Save(m); err != nil {
+			return fmt.Errorf("mass save failed: %w", err)
+		}
+	}
+
+	return nil
 }

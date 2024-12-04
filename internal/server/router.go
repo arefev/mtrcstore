@@ -12,6 +12,7 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(m.Logger)
 	r.Use(m.Compress)
+	r.Use(m.CheckSign)
 
 	r.Get("/", h.Get)
 	r.Get("/ping", h.Ping)

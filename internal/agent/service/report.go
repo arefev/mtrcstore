@@ -3,6 +3,9 @@ package service
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -150,6 +153,11 @@ func (r *report) request(data any, url string) error {
 		return fmt.Errorf("request failed: %w", err)
 	}
 
+	hash, err := r.sign(jsonBody)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+
 	body, err := r.compress(jsonBody)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
@@ -158,6 +166,7 @@ func (r *report) request(data any, url string) error {
 	_, err = r.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
+		SetHeader("HashSHA256", hex.EncodeToString(hash)).
 		SetBody(body).
 		Post(url)
 
@@ -166,6 +175,18 @@ func (r *report) request(data any, url string) error {
 	}
 
 	return nil
+}
+
+func (r *report) sign(data []byte) ([]byte, error) {
+	key := []byte("312msdlfmaskn1223lmn123ns")
+	h := hmac.New(sha256.New, key)
+	
+	if _, err := h.Write(data); err != nil {
+		return []byte{}, fmt.Errorf("sign failed: %w", err)
+	}
+
+	dst := h.Sum(nil)
+	return dst, nil
 }
 
 func (r *report) compress(p []byte) (*bytes.Buffer, error) {

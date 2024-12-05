@@ -31,7 +31,12 @@ func (s *signWriter) Write(p []byte) (int, error) {
 	}
 
 	s.Header().Add("HashSHA256", hex.EncodeToString(hash))
-	return s.ResponseWriter.Write(p)
+	n, err := s.ResponseWriter.Write(p)
+	if err != nil {
+		return 0, fmt.Errorf("write failed: %w", err)
+	}
+
+	return n, nil
 }
 
 func (m *Middleware) CheckSign(next http.Handler) http.Handler {

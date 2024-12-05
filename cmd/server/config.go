@@ -11,8 +11,9 @@ const (
 	Address         string = "localhost:8080"
 	LogLevel        string = "info"
 	DatabaseDSN     string = ""
-	StoreInterval   int    = 300
 	FileStoragePath string = ""
+	SecretKey       string = ""
+	StoreInterval   int    = 300
 	Restore         bool   = true
 )
 
@@ -21,6 +22,7 @@ type Config struct {
 	LogLevel        string `env:"LOG_LEVEL"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	SecretKey       string `env:"KEY"`
 	StoreInterval   int    `env:"STORE_INTERVAL"`
 	Restore         bool   `env:"RESTORE"`
 }
@@ -43,9 +45,10 @@ func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
 	f.StringVar(&cnf.Address, "a", Address, "address and port to run server")
 	f.StringVar(&cnf.LogLevel, "l", LogLevel, "log level")
-	f.IntVar(&cnf.StoreInterval, "i", StoreInterval, "store interval")
 	f.StringVar(&cnf.FileStoragePath, "f", FileStoragePath, "file storage path interval")
 	f.StringVar(&cnf.DatabaseDSN, "d", DatabaseDSN, "db connection string")
+	f.StringVar(&cnf.SecretKey, "k", SecretKey, "secret key")
+	f.IntVar(&cnf.StoreInterval, "i", StoreInterval, "store interval")
 	f.BoolVar(&cnf.Restore, "r", Restore, "need restore")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)

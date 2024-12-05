@@ -18,7 +18,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d=${DATABASE_DSN}
+	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}"
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/

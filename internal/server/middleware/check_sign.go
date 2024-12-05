@@ -14,7 +14,7 @@ import (
 
 func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		secretKey := []byte("312msdlfmaskn1223lmn123ns")
+		secretKey := []byte(m.secretKey)
 		if len(secretKey) == 0 {
 			next.ServeHTTP(w, r)
 			return

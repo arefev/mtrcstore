@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func InitRouter(h *handler.MetricHandlers, log *zap.Logger) *chi.Mux {
-	m := middleware.NewMiddleware(log)
+func InitRouter(h *handler.MetricHandlers, log *zap.Logger, secretKey string) *chi.Mux {
+	m := middleware.NewMiddleware(log, secretKey)
 	r := chi.NewRouter()
 	r.Use(m.Logger)
 	r.Use(m.Compress)

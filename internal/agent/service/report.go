@@ -150,19 +150,20 @@ func (r *report) sendCounters() {
 }
 
 func (r *report) request(data any, url string) error {
+	const requestFailed = "request failed:"
 	client := r.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip")
 
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return fmt.Errorf("%s %w", requestFailed, err)
 	}
 
 	if r.secretKey != "" {
 		hash, err := r.sign(jsonBody)
 		if err != nil {
-			return fmt.Errorf("request failed: %w", err)
+			return fmt.Errorf("%s %w", requestFailed, err)
 		}
 
 		client.SetHeader("HashSHA256", hex.EncodeToString(hash))
@@ -170,13 +171,11 @@ func (r *report) request(data any, url string) error {
 
 	body, err := r.compress(jsonBody)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return fmt.Errorf("%s %w", requestFailed, err)
 	}
 
-	_, err = client.SetBody(body).Post(url)
-
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+	if _, err := client.SetBody(body).Post(url); err != nil {
+		return fmt.Errorf("%s %w", requestFailed, err)
 	}
 
 	return nil

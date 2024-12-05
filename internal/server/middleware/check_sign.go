@@ -34,7 +34,7 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 			return
 		}
 
-		copy := io.NopCloser(bytes.NewBuffer(body))
+		bodyCopy := io.NopCloser(bytes.NewBuffer(body))
 		sign, err := sign(secretKey, body)
 		if err != nil {
 			m.log.Error("check sign failed", zap.Error(err))
@@ -42,7 +42,7 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 			return
 		}
 
-		r.Body = copy
+		r.Body = bodyCopy
 
 		hashDecoded, err := hex.DecodeString(hash)
 		if err != nil {

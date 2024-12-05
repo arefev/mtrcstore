@@ -27,7 +27,7 @@ func NewSignWriter(w http.ResponseWriter, secretKey []byte) *signWriter {
 func (s *signWriter) Write(p []byte) (int, error) {
 	hash, err := sign(s.secretKey, p)
 	if err != nil {
-		return 0, fmt.Errorf("sign failed: %w", err)
+		return 0, fmt.Errorf("write failed: %w", err)
 	}
 
 	s.Header().Add("HashSHA256", hex.EncodeToString(hash))

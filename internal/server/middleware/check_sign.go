@@ -79,10 +79,7 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 			return
 		}
 
-		newResp := NewSignWriter(w, secretKey)
-		w = newResp
-
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(NewSignWriter(w, secretKey), r)
 	})
 }
 

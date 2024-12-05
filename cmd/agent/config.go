@@ -11,10 +11,12 @@ const (
 	Address        = "localhost:8080"
 	PollInterval   = 2
 	ReportInterval = 10
+	SecretKey      = ""
 )
 
 type Config struct {
 	Address        string `env:"ADDRESS"`
+	SecretKey      string `env:"KEY"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 }
@@ -35,6 +37,7 @@ func NewConfig(params []string) (Config, error) {
 func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
 	f.StringVar(&cnf.Address, "a", Address, "server address and port")
+	f.StringVar(&cnf.SecretKey, "k", SecretKey, "secret key")
 	f.IntVar(&cnf.PollInterval, "p", PollInterval, "poll interval")
 	f.IntVar(&cnf.ReportInterval, "r", ReportInterval, "report interval")
 	if err := f.Parse(params); err != nil {

@@ -35,10 +35,11 @@ type report struct {
 	massUpdateURL string
 	gaugeName     string
 	counterName   string
+	secretKey     string
 	client        resty.Client
 }
 
-func NewReport(s Storage, host string) (report, error) {
+func NewReport(s Storage, host string, secretKey string) (report, error) {
 	const (
 		contentType       = "text/plain"
 		protocol          = "http://"
@@ -55,6 +56,7 @@ func NewReport(s Storage, host string) (report, error) {
 		massUpdateURL: massUpdateURLPath,
 		gaugeName:     gaugeName,
 		counterName:   counterName,
+		secretKey:     secretKey,
 		client:        *client,
 	}, nil
 }
@@ -148,27 +150,30 @@ func (r *report) sendCounters() {
 }
 
 func (r *report) request(data any, url string) error {
+	client := r.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip")
+
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
 
-	hash, err := r.sign(jsonBody)
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
-	}
+	if r.secretKey != "" {
+		hash, err := r.sign(jsonBody)
+		if err != nil {
+			return fmt.Errorf("request failed: %w", err)
+		}
 
+		client.SetHeader("HashSHA256", hex.EncodeToString(hash))
+	}
+	
 	body, err := r.compress(jsonBody)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
 
-	_, err = r.client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("HashSHA256", hex.EncodeToString(hash)).
-		SetBody(body).
-		Post(url)
+	_, err = client.SetBody(body).Post(url)
 
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
@@ -178,9 +183,9 @@ func (r *report) request(data any, url string) error {
 }
 
 func (r *report) sign(data []byte) ([]byte, error) {
-	key := []byte("312msdlfmaskn1223lmn123ns")
+	key := []byte(r.secretKey)
 	h := hmac.New(sha256.New, key)
-	
+
 	if _, err := h.Write(data); err != nil {
 		return []byte{}, fmt.Errorf("sign failed: %w", err)
 	}

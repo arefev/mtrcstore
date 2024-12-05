@@ -9,7 +9,7 @@ type Middleware struct {
 
 func NewMiddleware(log *zap.Logger, secretKey string) Middleware {
 	return Middleware{
-		log: log,
+		log:       log,
 		secretKey: secretKey,
 	}
 }

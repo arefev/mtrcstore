@@ -167,7 +167,7 @@ func (r *report) request(data any, url string) error {
 
 		client.SetHeader("HashSHA256", hex.EncodeToString(hash))
 	}
-	
+
 	body, err := r.compress(jsonBody)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)

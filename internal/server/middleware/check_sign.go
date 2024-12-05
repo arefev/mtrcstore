@@ -12,18 +12,35 @@ import (
 	"go.uber.org/zap"
 )
 
+type signWriter struct {
+	http.ResponseWriter
+	secretKey []byte
+}
+
+func NewSignWriter(w http.ResponseWriter, secretKey []byte) *signWriter {
+	return &signWriter{
+		ResponseWriter: w,
+		secretKey:      secretKey,
+	}
+}
+
+func (s *signWriter) Write(p []byte) (int, error) {
+	hash, err := sign(s.secretKey, p)
+	if err != nil {
+		return 0, fmt.Errorf("sign failed: %w", err)
+	}
+
+	s.Header().Add("HashSHA256", hex.EncodeToString(hash))
+	return s.ResponseWriter.Write(p)
+}
+
 func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		secretKey := []byte(m.secretKey)
-		if len(secretKey) == 0 {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		hash := r.Header.Get("HashSHA256")
-		if hash == "" {
-			m.log.Error("check sign failed: hash is empty")
-			w.WriteHeader(http.StatusBadRequest)
+
+		if len(secretKey) == 0 || hash == "" {
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -56,6 +73,9 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
+		newResp := NewSignWriter(w, secretKey)
+		w = newResp
 
 		next.ServeHTTP(w, r)
 	})

@@ -41,9 +41,11 @@ func (w *Worker) Run() error {
 		if period >= w.ReportInterval {
 			log.Printf("Run report after %d seconds", period)
 
-			if err := w.Report.MassSend(); err != nil {
-				log.Printf("worker failed: %v", err)
-			}
+			w.Report.Send()
+
+			// if err := w.Report.MassSend(); err != nil {
+			// 	log.Printf("worker failed: %v", err)
+			// }
 			start = time.Now()
 		}
 	}

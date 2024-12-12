@@ -70,24 +70,7 @@ func (r *report) Send() {
 
 func (r *report) MassSend() error {
 	const retryCount = 3
-	metrics := make([]model.Metric, 0)
-	for name, val := range r.Storage.GetGauges() {
-		mVal := float64(val)
-		metrics = append(metrics, model.Metric{
-			ID:    name,
-			MType: r.gaugeName,
-			Value: &mVal,
-		})
-	}
-
-	for name, val := range r.Storage.GetCounters() {
-		mVal := int64(val)
-		metrics = append(metrics, model.Metric{
-			ID:    name,
-			MType: r.counterName,
-			Delta: &mVal,
-		})
-	}
+	metrics := r.getMetrics()
 
 	r.Storage.ClearCounter()
 
@@ -104,6 +87,41 @@ func (r *report) MassSend() error {
 	}
 
 	return nil
+}
+
+func (r *report) getMetrics() []model.Metric {
+	metrics := make([]model.Metric, 0)
+	metrics = append(metrics, r.getGauges()...)
+	metrics = append(metrics, r.getCounters()...)
+	return metrics
+}
+
+func (r *report) getGauges() []model.Metric {
+	metrics := make([]model.Metric, 0)
+	for name, val := range r.Storage.GetGauges() {
+		mVal := float64(val)
+		metrics = append(metrics, model.Metric{
+			ID:    name,
+			MType: r.gaugeName,
+			Value: &mVal,
+		})
+	}
+
+	return metrics
+}
+
+func (r *report) getCounters() []model.Metric {
+	metrics := make([]model.Metric, 0)
+	for name, val := range r.Storage.GetGauges() {
+		mVal := float64(val)
+		metrics = append(metrics, model.Metric{
+			ID:    name,
+			MType: r.gaugeName,
+			Value: &mVal,
+		})
+	}
+
+	return metrics
 }
 
 func (r *report) Save(memStats *runtime.MemStats) error {
@@ -127,14 +145,7 @@ func (r *report) IncrementCounter() {
 }
 
 func (r *report) sendGauges() {
-	for name, val := range r.Storage.GetGauges() {
-		mVal := float64(val)
-		metric := model.Metric{
-			ID:    name,
-			MType: r.gaugeName,
-			Value: &mVal,
-		}
-
+	for _, metric := range r.getGauges() {
 		if err := r.request(metric, r.updateURL); err != nil {
 			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", r.gaugeName, err.Error())
 			continue
@@ -143,14 +154,7 @@ func (r *report) sendGauges() {
 }
 
 func (r *report) sendCounters() {
-	for name, val := range r.Storage.GetCounters() {
-		mVal := int64(val)
-		metric := model.Metric{
-			ID:    name,
-			MType: r.counterName,
-			Delta: &mVal,
-		}
-
+	for _, metric := range r.getCounters() {
 		if err := r.request(metric, r.updateURL); err != nil {
 			log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
 			continue

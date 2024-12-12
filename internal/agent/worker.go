@@ -30,7 +30,6 @@ func (w *Worker) Run() error {
 	start := time.Now()
 
 	for {
-
 		if err := w.read(&memStats); err != nil {
 			return fmt.Errorf("Worker Run() failed: %w", err)
 		}
@@ -74,5 +73,9 @@ func (w *Worker) read(memStats *runtime.MemStats) error {
 		return nil
 	})
 
-	return g.Wait()
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("worker read(): read metrics failed: %w", err)
+	}
+
+	return nil
 }

@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Reporter interface {
 	Send()
 	MassSend() error
 	Save(memStats *runtime.MemStats) error
+	SaveCPU() error
 	IncrementCounter()
 }
 
@@ -26,7 +30,7 @@ func (w *Worker) Run() error {
 	start := time.Now()
 
 	for {
-		w.Report.IncrementCounter()
+
 		if err := w.read(&memStats); err != nil {
 			return fmt.Errorf("Worker Run() failed: %w", err)
 		}
@@ -47,10 +51,28 @@ func (w *Worker) Run() error {
 }
 
 func (w *Worker) read(memStats *runtime.MemStats) error {
-	runtime.ReadMemStats(memStats)
-	if err := w.Report.Save(memStats); err != nil {
-		return fmt.Errorf("worker read(): metrics save failed: %w", err)
-	}
+	var m sync.Mutex
+	g := &errgroup.Group{}
 
-	return nil
+	g.Go(func() error {
+		m.Lock()
+		defer m.Unlock()
+		w.Report.IncrementCounter()
+		runtime.ReadMemStats(memStats)
+		if err := w.Report.Save(memStats); err != nil {
+			return fmt.Errorf("worker read(): metrics save failed: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		m.Lock()
+		defer m.Unlock()
+		if err := w.Report.SaveCPU(); err != nil {
+			return fmt.Errorf("worker read(): CPU save failed: %w", err)
+		}
+		return nil
+	})
+
+	return g.Wait()
 }

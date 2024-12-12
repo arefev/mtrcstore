@@ -23,6 +23,7 @@ type Counter int64
 
 type Storage interface {
 	Save(memStats *runtime.MemStats) error
+	SaveCPU() error
 	IncrementCounter()
 	ClearCounter()
 	GetGauges() map[string]Gauge
@@ -108,6 +109,14 @@ func (r *report) MassSend() error {
 func (r *report) Save(memStats *runtime.MemStats) error {
 	if err := r.Storage.Save(memStats); err != nil {
 		return fmt.Errorf("report save(): metrics save failed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *report) SaveCPU() error {
+	if err := r.Storage.SaveCPU(); err != nil {
+		return fmt.Errorf("report saveCPU() failed: %w", err)
 	}
 
 	return nil

@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"fmt"
 	"math/rand"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/service"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 type memory struct {
@@ -48,6 +50,19 @@ func (s *memory) Save(memStats *runtime.MemStats) error {
 	s.Gauge["Sys"] = service.Gauge(memStats.Sys)
 	s.Gauge["TotalAlloc"] = service.Gauge(memStats.TotalAlloc)
 	s.Gauge["RandomValue"] = service.Gauge(rand.Int())
+	return nil
+}
+
+func (s *memory) SaveCPU() error {
+	m, err := mem.VirtualMemory()
+	if err != nil {
+		return fmt.Errorf("save cpu failed: %w", err)
+	}
+
+	s.Gauge["TotalMemory"] = service.Gauge(m.Total)
+	s.Gauge["FreeMemory"] = service.Gauge(m.Free)
+	s.Gauge["CPUutilization1"] = service.Gauge(runtime.NumCPU())
+
 	return nil
 }
 

@@ -13,6 +13,7 @@ import (
 type Reporter interface {
 	Send()
 	MassSend() error
+	PoolSend()
 	Save(memStats *runtime.MemStats) error
 	SaveCPU() error
 	IncrementCounter()
@@ -41,7 +42,13 @@ func (w *Worker) Run() error {
 		if period >= w.ReportInterval {
 			log.Printf("Run report after %d seconds", period)
 
-			w.Report.Send()
+			rTimeStart := time.Now()
+
+			w.Report.PoolSend()
+			// w.Report.Send()
+
+			rDuration := time.Since(rTimeStart)
+			log.Printf("request duration: %v", rDuration)
 
 			// if err := w.Report.MassSend(); err != nil {
 			// 	log.Printf("worker failed: %v", err)

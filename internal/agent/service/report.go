@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/arefev/mtrcstore/internal/retry"
@@ -89,6 +90,41 @@ func (r *report) MassSend() error {
 	return nil
 }
 
+func (r *report) PoolSend() {
+	m := sync.Mutex{}
+	m.Lock()
+	defer m.Unlock()
+
+	metrics := r.getMetrics()
+    numJobs := len(metrics)
+    jobs := make(chan model.Metric, numJobs)
+    results := make(chan int, numJobs)
+
+    for w := 1; w <= 3; w++ {
+        go r.worker(w, jobs, results)
+    }
+
+	for _, m := range metrics {
+		jobs <- m
+	}
+
+    close(jobs)
+
+	for a := 1; a <= numJobs; a++ {
+        <-results
+    }
+}
+
+func (r *report) worker(id int, jobs <-chan model.Metric, results chan<- int) {
+    for j := range jobs {
+		if err := r.request(j, r.updateURL); err != nil {
+			log.Printf("worker send metric failed: %s", err.Error())
+			continue
+		}
+        results <- id
+    }
+}
+
 func (r *report) getMetrics() []model.Metric {
 	metrics := make([]model.Metric, 0)
 	metrics = append(metrics, r.getGauges()...)
@@ -112,12 +148,12 @@ func (r *report) getGauges() []model.Metric {
 
 func (r *report) getCounters() []model.Metric {
 	metrics := make([]model.Metric, 0)
-	for name, val := range r.Storage.GetGauges() {
-		mVal := float64(val)
+	for name, val := range r.Storage.GetCounters() {
+		delta := int64(val)
 		metrics = append(metrics, model.Metric{
 			ID:    name,
-			MType: r.gaugeName,
-			Value: &mVal,
+			MType: r.counterName,
+			Delta: &delta,
 		})
 	}
 

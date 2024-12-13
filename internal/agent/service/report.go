@@ -39,9 +39,10 @@ type report struct {
 	counterName   string
 	secretKey     string
 	client        resty.Client
+	rateLimit     int
 }
 
-func NewReport(s Storage, host string, secretKey string) (report, error) {
+func NewReport(s Storage, host string, rateLimit int, secretKey string) (report, error) {
 	const (
 		contentType       = "text/plain"
 		protocol          = "http://"
@@ -60,6 +61,7 @@ func NewReport(s Storage, host string, secretKey string) (report, error) {
 		counterName:   counterName,
 		secretKey:     secretKey,
 		client:        *client,
+		rateLimit:     rateLimit,
 	}, nil
 }
 
@@ -96,33 +98,33 @@ func (r *report) PoolSend() {
 	defer m.Unlock()
 
 	metrics := r.getMetrics()
-    numJobs := len(metrics)
-    jobs := make(chan model.Metric, numJobs)
-    results := make(chan int, numJobs)
+	numJobs := len(metrics)
+	jobs := make(chan model.Metric, numJobs)
+	results := make(chan int, numJobs)
 
-    for w := 1; w <= 3; w++ {
-        go r.worker(w, jobs, results)
-    }
+	for w := 1; w <= r.rateLimit; w++ {
+		go r.worker(w, jobs, results)
+	}
 
 	for _, m := range metrics {
 		jobs <- m
 	}
 
-    close(jobs)
+	close(jobs)
 
 	for a := 1; a <= numJobs; a++ {
-        <-results
-    }
+		<-results
+	}
 }
 
 func (r *report) worker(id int, jobs <-chan model.Metric, results chan<- int) {
-    for j := range jobs {
+	for j := range jobs {
 		if err := r.request(j, r.updateURL); err != nil {
 			log.Printf("worker send metric failed: %s", err.Error())
 			continue
 		}
-        results <- id
-    }
+		results <- id
+	}
 }
 
 func (r *report) getMetrics() []model.Metric {

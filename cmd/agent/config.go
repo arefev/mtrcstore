@@ -9,9 +9,10 @@ import (
 
 const (
 	Address        = "localhost:8080"
+	SecretKey      = ""
 	PollInterval   = 2
 	ReportInterval = 10
-	SecretKey      = ""
+	RateLimit      = 3
 )
 
 type Config struct {
@@ -19,6 +20,7 @@ type Config struct {
 	SecretKey      string `env:"KEY"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
+	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
 func NewConfig(params []string) (Config, error) {
@@ -40,6 +42,7 @@ func (cnf *Config) initFlags(params []string) error {
 	f.StringVar(&cnf.SecretKey, "k", SecretKey, "secret key")
 	f.IntVar(&cnf.PollInterval, "p", PollInterval, "poll interval")
 	f.IntVar(&cnf.ReportInterval, "r", ReportInterval, "report interval")
+	f.IntVar(&cnf.RateLimit, "l", RateLimit, "rate limit")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)
 	}

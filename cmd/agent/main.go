@@ -24,7 +24,7 @@ func run() error {
 	}
 
 	storage := repository.NewMemory()
-	report, err := service.NewReport(&storage, config.Address, config.SecretKey)
+	report, err := service.NewReport(&storage, config.Address, config.RateLimit, config.SecretKey)
 	if err != nil {
 		return fmt.Errorf("main run() failed: %w", err)
 	}
@@ -36,10 +36,11 @@ func run() error {
 	}
 
 	log.Printf(
-		"Run worker with params:\nserverHost = %s\npollInterval = %d\nreportInterval = %d",
+		"Run worker with params:\nserverHost = %s\npollInterval = %d\nreportInterval = %d\nrateLimit = %d\n",
 		config.Address,
 		config.PollInterval,
 		config.ReportInterval,
+		config.RateLimit,
 	)
 
 	return fmt.Errorf("main run() failed: %w", worker.Run())

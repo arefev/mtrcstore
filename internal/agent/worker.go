@@ -45,14 +45,10 @@ func (w *Worker) Run() error {
 			rTimeStart := time.Now()
 
 			w.Report.PoolSend()
-			// w.Report.Send()
 
 			rDuration := time.Since(rTimeStart)
 			log.Printf("request duration: %v", rDuration)
 
-			// if err := w.Report.MassSend(); err != nil {
-			// 	log.Printf("worker failed: %v", err)
-			// }
 			start = time.Now()
 		}
 	}

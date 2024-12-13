@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -42,12 +41,7 @@ func (w *Worker) Run() error {
 		if period >= w.ReportInterval {
 			log.Printf("Run report after %d seconds", period)
 
-			rTimeStart := time.Now()
-
-			w.Report.PoolSend()
-
-			rDuration := time.Since(rTimeStart)
-			log.Printf("request duration: %v", rDuration)
+			go w.Report.PoolSend()
 
 			start = time.Now()
 		}
@@ -55,12 +49,9 @@ func (w *Worker) Run() error {
 }
 
 func (w *Worker) read(memStats *runtime.MemStats) error {
-	var m sync.Mutex
 	g := &errgroup.Group{}
 
 	g.Go(func() error {
-		m.Lock()
-		defer m.Unlock()
 		w.Report.IncrementCounter()
 		runtime.ReadMemStats(memStats)
 		if err := w.Report.Save(memStats); err != nil {
@@ -70,8 +61,6 @@ func (w *Worker) read(memStats *runtime.MemStats) error {
 	})
 
 	g.Go(func() error {
-		m.Lock()
-		defer m.Unlock()
 		if err := w.Report.SaveCPU(); err != nil {
 			return fmt.Errorf("worker read(): CPU save failed: %w", err)
 		}

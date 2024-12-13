@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
+	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/service"
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
 type memory struct {
+	sync.Mutex
 	Gauge   map[string]service.Gauge
 	Counter map[string]service.Counter
 }
@@ -22,6 +24,8 @@ func NewMemory() memory {
 }
 
 func (s *memory) Save(memStats *runtime.MemStats) error {
+	s.Lock()
+	defer s.Unlock()
 	s.Gauge["Alloc"] = service.Gauge(memStats.Alloc)
 	s.Gauge["BuckHashSys"] = service.Gauge(memStats.BuckHashSys)
 	s.Gauge["Frees"] = service.Gauge(memStats.Frees)
@@ -54,6 +58,9 @@ func (s *memory) Save(memStats *runtime.MemStats) error {
 }
 
 func (s *memory) SaveCPU() error {
+	s.Lock()
+	defer s.Unlock()
+
 	m, err := mem.VirtualMemory()
 	if err != nil {
 		return fmt.Errorf("save cpu failed: %w", err)
@@ -67,10 +74,14 @@ func (s *memory) SaveCPU() error {
 }
 
 func (s *memory) IncrementCounter() {
+	s.Lock()
+	defer s.Unlock()
 	s.Counter["PollCount"]++
 }
 
 func (s *memory) ClearCounter() {
+	s.Lock()
+	defer s.Unlock()
 	s.Counter["PollCount"] = 0
 }
 

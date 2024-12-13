@@ -12,7 +12,6 @@ import (
 	"log"
 	"net"
 	"runtime"
-	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/arefev/mtrcstore/internal/retry"
@@ -93,14 +92,12 @@ func (r *report) MassSend() error {
 }
 
 func (r *report) PoolSend() {
-	m := sync.Mutex{}
-	m.Lock()
-	defer m.Unlock()
-
 	metrics := r.getMetrics()
 	numJobs := len(metrics)
 	jobs := make(chan model.Metric, numJobs)
 	results := make(chan int, numJobs)
+
+	r.Storage.ClearCounter()
 
 	for w := 1; w <= r.rateLimit; w++ {
 		go r.worker(w, jobs, results)

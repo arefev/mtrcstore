@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
 )
@@ -27,6 +28,7 @@ func (c counter) String() string {
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
+	sync.Mutex
 }
 
 func NewMemory() *memory {
@@ -41,6 +43,9 @@ func (s *memory) Close() error {
 }
 
 func (s *memory) Save(m model.Metric) error {
+	s.Lock()
+	defer s.Unlock()
+
 	switch m.MType {
 	case CounterName:
 		if m.Delta == nil {
@@ -116,6 +121,9 @@ func (s *memory) Ping() error {
 }
 
 func (s *memory) MassSave(elems []model.Metric) error {
+	s.Lock()
+	defer s.Unlock()
+
 	for _, m := range elems {
 		if err := s.Save(m); err != nil {
 			return fmt.Errorf("mass save failed: %w", err)

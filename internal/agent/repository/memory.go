@@ -11,9 +11,9 @@ import (
 )
 
 type memory struct {
-	sync.Mutex
 	Gauge   map[string]service.Gauge
 	Counter map[string]service.Counter
+	sync.Mutex
 }
 
 func NewMemory() memory {

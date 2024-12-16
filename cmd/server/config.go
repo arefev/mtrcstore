@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	Address         string = "localhost:8080"
-	LogLevel        string = "info"
-	DatabaseDSN     string = ""
-	FileStoragePath string = ""
-	SecretKey       string = ""
-	StoreInterval   int    = 300
-	Restore         bool   = true
+	address         string = "localhost:8080"
+	logLevel        string = "info"
+	databaseDSN     string = ""
+	fileStoragePath string = ""
+	secretKey       string = ""
+	storeInterval   int    = 300
+	restore         bool   = true
 )
 
 type Config struct {
@@ -43,13 +43,13 @@ func NewConfig(params []string) (Config, error) {
 
 func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&cnf.Address, "a", Address, "address and port to run server")
-	f.StringVar(&cnf.LogLevel, "l", LogLevel, "log level")
-	f.StringVar(&cnf.FileStoragePath, "f", FileStoragePath, "file storage path interval")
-	f.StringVar(&cnf.DatabaseDSN, "d", DatabaseDSN, "db connection string")
-	f.StringVar(&cnf.SecretKey, "k", SecretKey, "secret key")
-	f.IntVar(&cnf.StoreInterval, "i", StoreInterval, "store interval")
-	f.BoolVar(&cnf.Restore, "r", Restore, "need restore")
+	f.StringVar(&cnf.Address, "a", address, "address and port to run server")
+	f.StringVar(&cnf.LogLevel, "l", logLevel, "log level")
+	f.StringVar(&cnf.FileStoragePath, "f", fileStoragePath, "file storage path interval")
+	f.StringVar(&cnf.DatabaseDSN, "d", databaseDSN, "db connection string")
+	f.StringVar(&cnf.SecretKey, "k", secretKey, "secret key")
+	f.IntVar(&cnf.StoreInterval, "i", storeInterval, "store interval")
+	f.BoolVar(&cnf.Restore, "r", restore, "need restore")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)
 	}

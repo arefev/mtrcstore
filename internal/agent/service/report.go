@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
+	"github.com/arefev/mtrcstore/internal/retry"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -93,9 +94,13 @@ func (r *report) PoolSend() {
 
 func (r *report) worker(wg *sync.WaitGroup, jobs <-chan model.Metric) {
 	defer wg.Done()
+	const rCount = 3
 
 	for j := range jobs {
-		if err := r.request(j, r.updateURL); err != nil {
+		action := func() error {
+			return r.request(j, r.updateURL)
+		}
+		if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
 			log.Printf("worker send metric failed: %s", err.Error())
 			continue
 		}

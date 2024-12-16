@@ -80,7 +80,6 @@ func (r *report) PoolSend() {
 	r.Storage.ClearCounter()
 
 	for w := 0; w < r.rateLimit; w++ {
-		wg.Add(1)
 		go r.worker(&wg, jobs)
 	}
 
@@ -93,8 +92,10 @@ func (r *report) PoolSend() {
 }
 
 func (r *report) worker(wg *sync.WaitGroup, jobs <-chan model.Metric) {
-	defer wg.Done()
 	const rCount = 3
+	
+	wg.Add(1)
+	defer wg.Done()
 
 	for j := range jobs {
 		action := func() error {

@@ -11,7 +11,6 @@ import (
 
 type Reporter interface {
 	Send()
-	MassSend() error
 	PoolSend()
 	Save(memStats *runtime.MemStats) error
 	SaveCPU() error

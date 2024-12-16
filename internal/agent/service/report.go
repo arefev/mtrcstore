@@ -14,7 +14,6 @@ import (
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
-	"github.com/arefev/mtrcstore/internal/retry"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -68,27 +67,6 @@ func (r *report) Send() {
 	r.sendGauges()
 	r.sendCounters()
 	r.Storage.ClearCounter()
-}
-
-func (r *report) MassSend() error {
-	const retryCount = 3
-	metrics := r.getMetrics()
-
-	r.Storage.ClearCounter()
-
-	if len(metrics) == 0 {
-		return nil
-	}
-
-	action := func() error {
-		return r.request(metrics, r.massUpdateURL)
-	}
-
-	if err := retry.New(action, r.isConnRefused, retryCount).Run(); err != nil {
-		return fmt.Errorf("massSend(): failed to send metrics, %w", err)
-	}
-
-	return nil
 }
 
 func (r *report) PoolSend() {

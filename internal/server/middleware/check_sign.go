@@ -51,7 +51,7 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			m.log.Error("check sign failed", zap.Error(err))
+			m.log.Error("middleware CheckSign: read body failed", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -59,7 +59,7 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 		bodyCopy := io.NopCloser(bytes.NewBuffer(body))
 		sign, err := sign(secretKey, body)
 		if err != nil {
-			m.log.Error("check sign failed", zap.Error(err))
+			m.log.Error("middleware CheckSign: sign body failed", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -68,13 +68,13 @@ func (m *Middleware) CheckSign(next http.Handler) http.Handler {
 
 		hashDecoded, err := hex.DecodeString(hash)
 		if err != nil {
-			m.log.Error("check sign failed", zap.Error(err))
+			m.log.Error("middleware CheckSign: decode hash failed", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		if !hmac.Equal(sign, hashDecoded) {
-			m.log.Error("check sign failed: hashs not equal")
+			m.log.Error("middleware CheckSign: hashes not equal")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

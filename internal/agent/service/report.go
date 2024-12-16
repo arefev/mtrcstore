@@ -12,7 +12,6 @@ import (
 	"log"
 	"net"
 	"runtime"
-	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/arefev/mtrcstore/internal/retry"
@@ -31,7 +30,7 @@ type Storage interface {
 	GetCounters() map[string]Counter
 }
 
-type report struct {
+type Report struct {
 	Storage       Storage
 	updateURL     string
 	massUpdateURL string
@@ -39,10 +38,9 @@ type report struct {
 	counterName   string
 	secretKey     string
 	client        resty.Client
-	rateLimit     int
 }
 
-func NewReport(s Storage, host string, rateLimit int, secretKey string) (report, error) {
+func NewReport(s Storage, host string, secretKey string) (Report, error) {
 	const (
 		contentType       = "text/plain"
 		protocol          = "http://"
@@ -53,7 +51,7 @@ func NewReport(s Storage, host string, rateLimit int, secretKey string) (report,
 	)
 
 	client := resty.New().SetBaseURL(protocol + host)
-	return report{
+	return Report{
 		Storage:       s,
 		updateURL:     updateURLPath,
 		massUpdateURL: massUpdateURLPath,
@@ -61,61 +59,27 @@ func NewReport(s Storage, host string, rateLimit int, secretKey string) (report,
 		counterName:   counterName,
 		secretKey:     secretKey,
 		client:        *client,
-		rateLimit:     rateLimit,
 	}, nil
 }
 
-func (r *report) Send() {
-	r.sendGauges()
-	r.sendCounters()
-	r.Storage.ClearCounter()
-}
-
-func (r *report) PoolSend() {
-	var wg sync.WaitGroup
-
-	metrics := r.getMetrics()
-	jobs := make(chan model.Metric, r.rateLimit)
-
-	r.Storage.ClearCounter()
-
-	for range r.rateLimit {
-		go r.worker(&wg, jobs)
-	}
-
-	for _, m := range metrics {
-		jobs <- m
-	}
-
-	close(jobs)
-	wg.Wait()
-}
-
-func (r *report) worker(wg *sync.WaitGroup, jobs <-chan model.Metric) {
+func (r *Report) Send(metric model.Metric) {
 	const rCount = 3
-
-	wg.Add(1)
-	defer wg.Done()
-
-	for j := range jobs {
-		action := func() error {
-			return r.request(j, r.updateURL)
-		}
-		if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
-			log.Printf("worker send metric failed: %s", err.Error())
-			continue
-		}
+	action := func() error {
+		return r.request(metric, r.updateURL)
+	}
+	if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
+		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
 	}
 }
 
-func (r *report) getMetrics() []model.Metric {
+func (r *Report) GetMetrics() []model.Metric {
 	metrics := make([]model.Metric, 0)
 	metrics = append(metrics, r.getGauges()...)
 	metrics = append(metrics, r.getCounters()...)
 	return metrics
 }
 
-func (r *report) getGauges() []model.Metric {
+func (r *Report) getGauges() []model.Metric {
 	metrics := make([]model.Metric, 0)
 	for name, val := range r.Storage.GetGauges() {
 		mVal := float64(val)
@@ -129,7 +93,7 @@ func (r *report) getGauges() []model.Metric {
 	return metrics
 }
 
-func (r *report) getCounters() []model.Metric {
+func (r *Report) getCounters() []model.Metric {
 	metrics := make([]model.Metric, 0)
 	for name, val := range r.Storage.GetCounters() {
 		delta := int64(val)
@@ -143,7 +107,7 @@ func (r *report) getCounters() []model.Metric {
 	return metrics
 }
 
-func (r *report) Save(memStats *runtime.MemStats) error {
+func (r *Report) Save(memStats *runtime.MemStats) error {
 	if err := r.Storage.Save(memStats); err != nil {
 		return fmt.Errorf("report save(): metrics save failed: %w", err)
 	}
@@ -151,7 +115,7 @@ func (r *report) Save(memStats *runtime.MemStats) error {
 	return nil
 }
 
-func (r *report) SaveCPU() error {
+func (r *Report) SaveCPU() error {
 	if err := r.Storage.SaveCPU(); err != nil {
 		return fmt.Errorf("report saveCPU() failed: %w", err)
 	}
@@ -159,29 +123,15 @@ func (r *report) SaveCPU() error {
 	return nil
 }
 
-func (r *report) IncrementCounter() {
+func (r *Report) IncrementCounter() {
 	r.Storage.IncrementCounter()
 }
 
-func (r *report) sendGauges() {
-	for _, metric := range r.getGauges() {
-		if err := r.request(metric, r.updateURL); err != nil {
-			log.Printf("sendGauges(): failed to send the gauge metric %s: %s", r.gaugeName, err.Error())
-			continue
-		}
-	}
+func (r *Report) ClearCounter() {
+	r.Storage.ClearCounter()
 }
 
-func (r *report) sendCounters() {
-	for _, metric := range r.getCounters() {
-		if err := r.request(metric, r.updateURL); err != nil {
-			log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
-			continue
-		}
-	}
-}
-
-func (r *report) request(data any, url string) error {
+func (r *Report) request(data any, url string) error {
 	client := r.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip")
@@ -212,11 +162,11 @@ func (r *report) request(data any, url string) error {
 	return nil
 }
 
-func (r *report) requestError(err error) error {
+func (r *Report) requestError(err error) error {
 	return fmt.Errorf("request failed: %w", err)
 }
 
-func (r *report) sign(data []byte) ([]byte, error) {
+func (r *Report) sign(data []byte) ([]byte, error) {
 	key := []byte(r.secretKey)
 	h := hmac.New(sha256.New, key)
 
@@ -228,7 +178,7 @@ func (r *report) sign(data []byte) ([]byte, error) {
 	return dst, nil
 }
 
-func (r *report) compress(p []byte) (*bytes.Buffer, error) {
+func (r *Report) compress(p []byte) (*bytes.Buffer, error) {
 	var err error
 	body := bytes.NewBuffer(nil)
 	w := gzip.NewWriter(body)
@@ -243,7 +193,7 @@ func (r *report) compress(p []byte) (*bytes.Buffer, error) {
 	return body, nil
 }
 
-func (r *report) isConnRefused(err error) bool {
+func (r *Report) isConnRefused(err error) bool {
 	var netErr *net.OpError
 	return errors.As(err, &netErr) && netErr.Op == "dial" && netErr.Err.Error() == "connect: connection refused"
 }

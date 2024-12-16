@@ -24,13 +24,15 @@ func run() error {
 	}
 
 	storage := repository.NewMemory()
-	report, err := service.NewReport(&storage, config.Address, config.RateLimit, config.SecretKey)
+	report, err := service.NewReport(&storage, config.Address, config.SecretKey)
 	if err != nil {
 		return fmt.Errorf("main run() failed: %w", err)
 	}
 
+	wp := service.NewWorkerPool(&report, config.RateLimit)
+
 	worker := agent.Worker{
-		Report:         &report,
+		WorkerPool:     wp,
 		PollInterval:   config.PollInterval,
 		ReportInterval: config.ReportInterval,
 	}

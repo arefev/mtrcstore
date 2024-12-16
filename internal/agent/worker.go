@@ -6,19 +6,12 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/arefev/mtrcstore/internal/agent/service"
 	"golang.org/x/sync/errgroup"
 )
 
-type Reporter interface {
-	Send()
-	PoolSend()
-	Save(memStats *runtime.MemStats) error
-	SaveCPU() error
-	IncrementCounter()
-}
-
 type Worker struct {
-	Report         Reporter
+	WorkerPool     *service.WorkerPool
 	PollInterval   int
 	ReportInterval int
 }
@@ -27,6 +20,8 @@ func (w *Worker) Run() error {
 	var period int
 	var memStats runtime.MemStats
 	start := time.Now()
+
+	w.WorkerPool.Run()
 
 	for {
 		if err := w.read(&memStats); err != nil {
@@ -40,8 +35,7 @@ func (w *Worker) Run() error {
 		if period >= w.ReportInterval {
 			log.Printf("Run report after %d seconds", period)
 
-			go w.Report.PoolSend()
-
+			w.WorkerPool.Send()
 			start = time.Now()
 		}
 	}
@@ -51,16 +45,16 @@ func (w *Worker) read(memStats *runtime.MemStats) error {
 	g := &errgroup.Group{}
 
 	g.Go(func() error {
-		w.Report.IncrementCounter()
+		w.WorkerPool.Report.IncrementCounter()
 		runtime.ReadMemStats(memStats)
-		if err := w.Report.Save(memStats); err != nil {
+		if err := w.WorkerPool.Report.Save(memStats); err != nil {
 			return fmt.Errorf("worker read(): metrics save failed: %w", err)
 		}
 		return nil
 	})
 
 	g.Go(func() error {
-		if err := w.Report.SaveCPU(); err != nil {
+		if err := w.WorkerPool.Report.SaveCPU(); err != nil {
 			return fmt.Errorf("worker read(): CPU save failed: %w", err)
 		}
 		return nil

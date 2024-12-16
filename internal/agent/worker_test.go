@@ -39,17 +39,19 @@ func TestWorker_read(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			serverHost := "http://localhost:8080"
 			storage := repository.NewMemory()
-			report, err := service.NewReport(&storage, serverHost, tt.fields.RateLimit, "")
+			report, err := service.NewReport(&storage, serverHost, "")
 			assert.NoError(t, err)
 
+			wp := service.NewWorkerPool(&report, tt.fields.RateLimit)
+
 			w := Worker{
-				Report:         &report,
+				WorkerPool:     wp,
 				ReportInterval: tt.fields.ReportInterval,
 				PollInterval:   tt.fields.PollInterval,
 			}
 
 			assert.NoError(t, w.read(tt.args.memStats))
-			w.Report.IncrementCounter()
+			wp.Report.IncrementCounter()
 
 			assert.Contains(t, storage.GetGauges(), "Alloc")
 			assert.Contains(t, storage.GetCounters(), "PollCount")

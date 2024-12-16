@@ -38,3 +38,7 @@ func (wp *WorkerPool) Send() {
 
 	wp.Report.ClearCounter()
 }
+
+func (wp *WorkerPool) IsEmpty() bool {
+	return len(wp.jobChan) == 0
+}

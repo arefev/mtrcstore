@@ -31,8 +31,10 @@ func (w *Worker) Run() error {
 				return fmt.Errorf("Worker Run() failed: %w", err)
 			}
 		case <-sendTime:
-			log.Println("sendTime")
-			w.WorkerPool.Send()
+			if w.WorkerPool.IsEmpty() {
+				log.Println("sendTime")
+				go w.WorkerPool.Send()
+			}
 		}
 	}
 }

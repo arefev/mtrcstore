@@ -79,7 +79,7 @@ func (r *report) PoolSend() {
 
 	r.Storage.ClearCounter()
 
-	for w := 1; w <= r.rateLimit; w++ {
+	for w := 0; w < r.rateLimit; w++ {
 		wg.Add(1)
 		go r.worker(&wg, jobs)
 	}

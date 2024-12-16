@@ -30,7 +30,6 @@ func (wp *WorkerPool) Run() {
 func (wp *WorkerPool) worker() {
 	for metric := range wp.jobChan {
 		wp.Report.Send(metric)
-		log.Printf("worker job runned\n")
 	}
 }
 

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"log"
-
 	"github.com/arefev/mtrcstore/internal/agent/model"
 )
 

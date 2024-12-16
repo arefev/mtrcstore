@@ -29,10 +29,8 @@ func run() error {
 		return fmt.Errorf("main run() failed: %w", err)
 	}
 
-	wp := service.NewWorkerPool(&report, config.RateLimit)
-
 	worker := agent.Worker{
-		WorkerPool:     wp,
+		WorkerPool:     service.NewWorkerPool(&report, config.RateLimit),
 		PollInterval:   config.PollInterval,
 		ReportInterval: config.ReportInterval,
 	}

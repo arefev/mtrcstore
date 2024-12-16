@@ -72,7 +72,7 @@ func (r *report) Send() {
 func (r *report) PoolSend() {
 	metrics := r.getMetrics()
 	numJobs := len(metrics)
-	jobs := make(chan model.Metric, numJobs)
+	jobs := make(chan model.Metric, r.rateLimit)
 	results := make(chan int, numJobs)
 
 	r.Storage.ClearCounter()

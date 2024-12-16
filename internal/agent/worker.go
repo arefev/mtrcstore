@@ -17,26 +17,22 @@ type Worker struct {
 }
 
 func (w *Worker) Run() error {
-	var period int
 	var memStats runtime.MemStats
-	start := time.Now()
+	readTime := time.NewTicker(time.Duration(w.PollInterval) * time.Second).C
+	sendTime := time.NewTicker(time.Duration(w.ReportInterval) * time.Second).C
 
 	w.WorkerPool.Run()
 
 	for {
-		if err := w.read(&memStats); err != nil {
-			return fmt.Errorf("Worker Run() failed: %w", err)
-		}
-
-		time.Sleep(time.Duration(w.PollInterval * int(time.Second)))
-
-		period = int(time.Until(start).Abs().Seconds())
-
-		if period >= w.ReportInterval {
-			log.Printf("Run report after %d seconds", period)
-
+		select {
+		case <-readTime:
+			log.Println("readTime")
+			if err := w.read(&memStats); err != nil {
+				return fmt.Errorf("Worker Run() failed: %w", err)
+			}
+		case <-sendTime:
+			log.Println("sendTime")
 			w.WorkerPool.Send()
-			start = time.Now()
 		}
 	}
 }

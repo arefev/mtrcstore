@@ -26,7 +26,7 @@ server-build:
 agent: agent-run
 
 agent-run: agent-build
-	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}"
+	./cmd/agent/agent -r 10 -p 2 -k="${SECRET_KEY}"
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/

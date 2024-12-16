@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"sync"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/go-resty/resty/v2"
@@ -70,15 +71,16 @@ func (r *report) Send() {
 }
 
 func (r *report) PoolSend() {
+	var wg sync.WaitGroup
+
 	metrics := r.getMetrics()
-	numJobs := len(metrics)
 	jobs := make(chan model.Metric, r.rateLimit)
-	results := make(chan int, numJobs)
 
 	r.Storage.ClearCounter()
 
 	for w := 1; w <= r.rateLimit; w++ {
-		go r.worker(w, jobs, results)
+		wg.Add(1)
+		go r.worker(&wg, jobs)
 	}
 
 	for _, m := range metrics {
@@ -86,19 +88,17 @@ func (r *report) PoolSend() {
 	}
 
 	close(jobs)
-
-	for a := 1; a <= numJobs; a++ {
-		<-results
-	}
+	wg.Wait()
 }
 
-func (r *report) worker(id int, jobs <-chan model.Metric, results chan<- int) {
+func (r *report) worker(wg *sync.WaitGroup, jobs <-chan model.Metric) {
+	defer wg.Done()
+
 	for j := range jobs {
 		if err := r.request(j, r.updateURL); err != nil {
 			log.Printf("worker send metric failed: %s", err.Error())
 			continue
 		}
-		results <- id
 	}
 }
 

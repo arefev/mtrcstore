@@ -28,13 +28,15 @@ func (c counter) String() string {
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
-	sync.Mutex
+	mutex   *sync.Mutex
 }
 
 func NewMemory() *memory {
+	m := sync.Mutex{}
 	return &memory{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
+		mutex:   &m,
 	}
 }
 
@@ -43,8 +45,8 @@ func (s *memory) Close() error {
 }
 
 func (s *memory) Save(m model.Metric) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	switch m.MType {
 	case CounterName:
@@ -121,8 +123,8 @@ func (s *memory) Ping() error {
 }
 
 func (s *memory) MassSave(elems []model.Metric) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	for _, m := range elems {
 		if err := s.Save(m); err != nil {

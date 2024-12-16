@@ -13,19 +13,21 @@ import (
 type memory struct {
 	Gauge   map[string]service.Gauge
 	Counter map[string]service.Counter
-	sync.Mutex
+	mutex   *sync.Mutex
 }
 
 func NewMemory() memory {
+	m := sync.Mutex{}
 	return memory{
 		Gauge:   make(map[string]service.Gauge),
 		Counter: make(map[string]service.Counter),
+		mutex:   &m,
 	}
 }
 
 func (s *memory) Save(memStats *runtime.MemStats) error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	s.Gauge["Alloc"] = service.Gauge(memStats.Alloc)
 	s.Gauge["BuckHashSys"] = service.Gauge(memStats.BuckHashSys)
 	s.Gauge["Frees"] = service.Gauge(memStats.Frees)
@@ -58,8 +60,8 @@ func (s *memory) Save(memStats *runtime.MemStats) error {
 }
 
 func (s *memory) SaveCPU() error {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	m, err := mem.VirtualMemory()
 	if err != nil {
@@ -74,14 +76,14 @@ func (s *memory) SaveCPU() error {
 }
 
 func (s *memory) IncrementCounter() {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	s.Counter["PollCount"]++
 }
 
 func (s *memory) ClearCounter() {
-	s.Lock()
-	defer s.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	s.Counter["PollCount"] = 0
 }
 

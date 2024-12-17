@@ -40,7 +40,7 @@ type Report struct {
 	client        resty.Client
 }
 
-func NewReport(s Storage, host string, secretKey string) (Report, error) {
+func NewReport(s Storage, host string, secretKey string) *Report {
 	const (
 		contentType       = "text/plain"
 		protocol          = "http://"
@@ -51,7 +51,7 @@ func NewReport(s Storage, host string, secretKey string) (Report, error) {
 	)
 
 	client := resty.New().SetBaseURL(protocol + host)
-	return Report{
+	return &Report{
 		Storage:       s,
 		updateURL:     updateURLPath,
 		massUpdateURL: massUpdateURLPath,
@@ -59,7 +59,7 @@ func NewReport(s Storage, host string, secretKey string) (Report, error) {
 		counterName:   counterName,
 		secretKey:     secretKey,
 		client:        *client,
-	}, nil
+	}
 }
 
 func (r *Report) Send(metric model.Metric) {

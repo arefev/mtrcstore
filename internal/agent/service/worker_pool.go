@@ -6,7 +6,7 @@ import (
 
 type WorkerPool struct {
 	Report    *Report
-	jobChan   chan model.Metric
+	jobChan   chan []model.Metric
 	rateLimit int
 }
 
@@ -18,7 +18,7 @@ func NewWorkerPool(report *Report, rateLimit int) *WorkerPool {
 }
 
 func (wp *WorkerPool) Run() {
-	wp.jobChan = make(chan model.Metric, wp.rateLimit)
+	wp.jobChan = make(chan []model.Metric, wp.rateLimit)
 
 	for range wp.rateLimit {
 		go wp.worker()
@@ -26,19 +26,12 @@ func (wp *WorkerPool) Run() {
 }
 
 func (wp *WorkerPool) worker() {
-	for metric := range wp.jobChan {
-		wp.Report.Send(metric)
+	for metrics := range wp.jobChan {
+		wp.Report.Send(metrics)
 	}
 }
 
 func (wp *WorkerPool) Send() {
-	for _, m := range wp.Report.GetMetrics() {
-		wp.jobChan <- m
-	}
-
+	wp.jobChan <- wp.Report.GetMetrics()
 	wp.Report.ClearCounter()
-}
-
-func (wp *WorkerPool) IsEmpty() bool {
-	return len(wp.jobChan) == 0
 }

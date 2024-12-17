@@ -62,10 +62,10 @@ func NewReport(s Storage, host string, secretKey string) *Report {
 	}
 }
 
-func (r *Report) Send(metric model.Metric) {
+func (r *Report) Send(metrics []model.Metric) {
 	const rCount = 3
 	action := func() error {
-		return r.request(metric, r.updateURL)
+		return r.request(metrics, r.massUpdateURL)
 	}
 	if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
 		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())

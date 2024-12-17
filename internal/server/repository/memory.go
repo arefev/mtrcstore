@@ -123,9 +123,6 @@ func (s *memory) Ping() error {
 }
 
 func (s *memory) MassSave(elems []model.Metric) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	for _, m := range elems {
 		if err := s.Save(m); err != nil {
 			return fmt.Errorf("mass save failed: %w", err)

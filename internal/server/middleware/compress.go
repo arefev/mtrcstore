@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"net/http"
 	"strings"
 
@@ -28,18 +31,29 @@ func (m *Middleware) Compress(next http.Handler) http.Handler {
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
 
 		if sendsGzip {
-			cr, err := service.NewCompressReader(r.Body)
+			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
-				m.log.Debug("gzip error", zap.Error(err))
+				m.log.Debug("gzip reader error", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			r.Body = cr
+
+			b, err := io.ReadAll(gz)
+			if err != nil {
+				m.log.Debug("gzip reader error", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 			defer func() {
-				if err := cr.Close(); err != nil {
-					m.log.Debug("reader body close error", zap.Error(err))
+				if err := gz.Close(); err != nil {
+					m.log.Debug("gzip reader error", zap.Error(err))
+					w.WriteHeader(http.StatusInternalServerError)
+					return
 				}
 			}()
+
+			r.Body = io.NopCloser(bytes.NewBuffer(b))
 		}
 
 		next.ServeHTTP(w, r)

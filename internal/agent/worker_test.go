@@ -13,6 +13,7 @@ func TestWorker_read(t *testing.T) {
 	type fields struct {
 		ReportInterval int
 		PollInterval   int
+		RateLimit      int
 	}
 	type args struct {
 		memStats *runtime.MemStats
@@ -27,6 +28,7 @@ func TestWorker_read(t *testing.T) {
 			fields: fields{
 				ReportInterval: 2,
 				PollInterval:   0,
+				RateLimit:      3,
 			},
 			args: args{
 				memStats: &runtime.MemStats{},
@@ -37,17 +39,18 @@ func TestWorker_read(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			serverHost := "http://localhost:8080"
 			storage := repository.NewMemory()
-			report, err := service.NewReport(&storage, serverHost)
-			assert.NoError(t, err)
+			report := service.NewReport(&storage, serverHost, "")
+
+			wp := service.NewWorkerPool(report, tt.fields.RateLimit)
 
 			w := Worker{
-				Report:         &report,
+				WorkerPool:     wp,
 				ReportInterval: tt.fields.ReportInterval,
 				PollInterval:   tt.fields.PollInterval,
 			}
 
 			assert.NoError(t, w.read(tt.args.memStats))
-			w.Report.IncrementCounter()
+			wp.Report.IncrementCounter()
 
 			assert.Contains(t, storage.GetGauges(), "Alloc")
 			assert.Contains(t, storage.GetCounters(), "PollCount")

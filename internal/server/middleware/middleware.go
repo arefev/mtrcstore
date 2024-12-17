@@ -3,11 +3,13 @@ package middleware
 import "go.uber.org/zap"
 
 type Middleware struct {
-	log *zap.Logger
+	log       *zap.Logger
+	secretKey string
 }
 
-func NewMiddleware(log *zap.Logger) Middleware {
+func NewMiddleware(log *zap.Logger, secretKey string) Middleware {
 	return Middleware{
-		log: log,
+		log:       log,
+		secretKey: secretKey,
 	}
 }

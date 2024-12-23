@@ -18,7 +18,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d=${DATABASE_DSN}
+	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}"
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/
@@ -26,7 +26,7 @@ server-build:
 agent: agent-run
 
 agent-run: agent-build
-	./cmd/agent/agent -r 2
+	./cmd/agent/agent -r 10 -p 2 -k="${SECRET_KEY}"
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/
@@ -37,7 +37,7 @@ gofmt:
 containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
-test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10 test-iter11 test-iter12 test-iter13
+test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10 test-iter11 test-iter12 test-iter13 test-iter14
 
 test-iter1:
 	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}
@@ -83,6 +83,9 @@ test-iter12:
 
 test-iter13:
 	metricstest -test.v -test.run=^TestIteration13$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH} -database-dsn=${DATABASE_DSN}
+
+test-iter14:
+	metricstest -test.v -test.run=^TestIteration14$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH} -database-dsn=${DATABASE_DSN} -key="${SECRET_KEY}"
 
 .PHONY: golangci-lint-run
 golangci-lint-run: _golangci-lint-rm-unformatted-report

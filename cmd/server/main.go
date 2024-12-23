@@ -46,7 +46,7 @@ func run() error {
 	}()
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
-	r := server.InitRouter(metricHandlers, cLog)
+	r := server.InitRouter(metricHandlers, cLog, config.SecretKey)
 
 	cLog.Info(
 		"Server running",

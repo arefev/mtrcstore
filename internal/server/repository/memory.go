@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/arefev/mtrcstore/internal/server/model"
 )
@@ -27,12 +28,15 @@ func (c counter) String() string {
 type memory struct {
 	Gauge   map[string]gauge
 	Counter map[string]counter
+	mutex   *sync.Mutex
 }
 
 func NewMemory() *memory {
+	m := sync.Mutex{}
 	return &memory{
 		Gauge:   make(map[string]gauge),
 		Counter: make(map[string]counter),
+		mutex:   &m,
 	}
 }
 
@@ -41,6 +45,9 @@ func (s *memory) Close() error {
 }
 
 func (s *memory) Save(m model.Metric) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	switch m.MType {
 	case CounterName:
 		if m.Delta == nil {

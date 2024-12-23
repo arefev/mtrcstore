@@ -3,7 +3,6 @@ package service
 import (
 	"compress/gzip"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -43,38 +42,6 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 func (c *compressWriter) Close() error {
 	if err := c.zw.Close(); err != nil {
 		return fmt.Errorf("compressWriter Close failed: %w", err)
-	}
-	return nil
-}
-
-type compressReader struct {
-	r  io.ReadCloser
-	zr *gzip.Reader
-}
-
-func NewCompressReader(r io.ReadCloser) (*compressReader, error) {
-	zr, err := gzip.NewReader(r)
-	if err != nil {
-		return nil, fmt.Errorf("gzip reader failed: %w", err)
-	}
-
-	return &compressReader{
-		r:  r,
-		zr: zr,
-	}, nil
-}
-
-func (c compressReader) Read(p []byte) (n int, err error) {
-	n, err = c.zr.Read(p)
-	if err != nil {
-		return n, fmt.Errorf("compressReader Read failed: %w", err)
-	}
-	return n, nil
-}
-
-func (c *compressReader) Close() error {
-	if err := c.r.Close(); err != nil {
-		return fmt.Errorf("compressReader Close failed: %w", err)
 	}
 	return nil
 }

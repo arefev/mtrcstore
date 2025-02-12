@@ -30,7 +30,7 @@ server-build-cover:
 agent: agent-run
 
 agent-run: agent-build
-	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}"
+	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}" -a="localhost:8081"
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/

@@ -5,6 +5,8 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
+
+	chi_middleware "github.com/go-chi/chi/v5/middleware"
 )
 
 func InitRouter(h *handler.MetricHandlers, log *zap.Logger, secretKey string) *chi.Mux {
@@ -13,6 +15,7 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger, secretKey string) *c
 	r.Use(m.Logger)
 	r.Use(m.Compress)
 	r.Use(m.CheckSign)
+	r.Mount("/debug", chi_middleware.Profiler())
 
 	r.Get("/", h.Get)
 	r.Get("/ping", h.Ping)

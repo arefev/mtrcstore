@@ -29,3 +29,4 @@ vendor/
 *.json
 golangci-lint
 q.md
+test.html

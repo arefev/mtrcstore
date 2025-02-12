@@ -11,22 +11,26 @@ DOCKER_PROJECT_NAME=mtrcstore
 DATABASE_DSN="host=${DB_HOST} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=disable"
 
 
-.PHONY: build server-build server server-run server-build agent agent-run agent-build gofmt test
+.PHONY: build server-build server server-run server-build agent agent-run agent-build gofmt test-iter
 
 build: server-build agent-build
 
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}"
+	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081"
 
 server-build:
 	go build -o ./cmd/server/server ./cmd/server/
 
+server-build-cover:
+	go build -cover -o ./cmd/server/server ./cmd/server/
+.PHONY: server-build-cover
+
 agent: agent-run
 
 agent-run: agent-build
-	./cmd/agent/agent -r 10 -p 2 -k="${SECRET_KEY}"
+	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}"
 
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/
@@ -37,7 +41,17 @@ gofmt:
 containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
-test: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10 test-iter11 test-iter12 test-iter13 test-iter14
+test: server-build-cover
+	go test ./... -cover -coverprofile=coverage.out && \
+	go tool cover -html coverage.out -o test.html && \
+	go tool cover -func=coverage.out
+.PHONY: test
+
+test-clear: 
+	rm -f coverage.out && rm -f test.html
+.PHONY: test-clear
+
+test-iter: test-iter1 test-iter2a test-iter2b test-iter3a test-iter3b test-iter4 test-iter5 test-iter6 test-iter7 test-iter8 test-iter9 test-iter10 test-iter11 test-iter12 test-iter13 test-iter14
 
 test-iter1:
 	metricstest -test.v -test.run=^TestIteration1$$ -agent-binary-path=${T_AGENT_BINARY_PATH} -binary-path=${T_BINARY_PATH} -source-path=${T_SOURCE_PATH} -server-port=${T_SERVER_PORT} -file-storage-path=${FILE_STORAGE_PATH}

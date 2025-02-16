@@ -52,9 +52,6 @@ linters-settings:
   asasalint:
     ignore-test: false
 
-  dupl:
-    threshold: 100
-
   dupword:
     keywords: []
 
@@ -480,7 +477,6 @@ linters:
     - bidichk
     - bodyclose
     - containedctx
-    - dupl
     - dupword
     - durationcheck
     - errcheck

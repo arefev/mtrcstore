@@ -38,7 +38,7 @@ func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
 	return &m
 }
 
-// Update godoc
+// Update metric by type and name
 //
 //	@Tags		Update
 //	@Summary	Update metric by type and name

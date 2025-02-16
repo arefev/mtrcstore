@@ -39,7 +39,7 @@ gofmt:
 	gofmt -s -w ./
 
 swag:
-	swag init --parseInternal --parseDependency -g internal/server/handler/metric.go
+	swag init --parseInternal --parseDependency -g internal/server/handler/metric.go && swag fmt
 .PHONY: swag
 
 containers:

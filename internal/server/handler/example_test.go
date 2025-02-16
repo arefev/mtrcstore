@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
@@ -12,13 +11,12 @@ func ExampleMetricHandlers_Update() {
 	req.Method = http.MethodPost
 	req.URL = "http://localhost:8080/update/gauge/Alloc/1.55"
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response status code %d", res.StatusCode())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_Find() {
@@ -26,13 +24,12 @@ func ExampleMetricHandlers_Find() {
 	req.Method = http.MethodGet
 	req.URL = "http://localhost:8080/value/counter/PollCount"
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response status code %d", res.StatusCode())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_UpdateJSON() {
@@ -48,13 +45,12 @@ func ExampleMetricHandlers_UpdateJSON() {
 	req.URL = "http://localhost:8080/update/"
 	req.Body = data
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response status code %d", res.StatusCode())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_FindJSON() {
@@ -69,13 +65,12 @@ func ExampleMetricHandlers_FindJSON() {
 	req.URL = "http://localhost:8080/value/"
 	req.Body = data
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response body %s", res.Body())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_Get() {
@@ -83,13 +78,12 @@ func ExampleMetricHandlers_Get() {
 	req.Method = http.MethodGet
 	req.URL = "http://localhost:8080"
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response body %s", res.Body())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_Ping() {
@@ -97,13 +91,12 @@ func ExampleMetricHandlers_Ping() {
 	req.Method = http.MethodGet
 	req.URL = "http://localhost:8080/ping"
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response status code %d", res.StatusCode())
-	fmt.Println(response)
+	// Output:
 }
 
 func ExampleMetricHandlers_Updates() {
@@ -126,11 +119,10 @@ func ExampleMetricHandlers_Updates() {
 	req.URL = "http://localhost:8080/updates/"
 	req.Body = data
 
-	res, err := req.Send()
+	_, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 
-	response := fmt.Sprintf("Response status code %d", res.StatusCode())
-	fmt.Println(response)
+	// Output:
 }

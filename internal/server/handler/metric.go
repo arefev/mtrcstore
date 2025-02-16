@@ -12,6 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Title MetricsStore API
+// @Description Metrics storage service
+// @Version 1.0
+
+// @BasePath /
+// @Host localhost:8080
+
+// @Tag.name Info
+// @Tag.description "Group of requests to get metrics"
+
+// @Tag.name Update
+// @Tag.description "Group of requests to update metrics"
+
 type MetricHandlers struct {
 	Storage repository.Storage
 	log     *zap.Logger
@@ -25,6 +38,19 @@ func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
 	return &m
 }
 
+// Update godoc
+// @Tags Update
+// @Summary Update metric by type and name
+// @ID updateMetric
+// @Accept  text/html
+// @Produce text/html
+// @Param type path string true "metric type [counter, gauge]"
+// @Param name path string true "metric name"
+// @Param value path number true "metric value"
+// @Success 200
+// @Failure 400
+// @Failure 500
+// @Router /update/{type}/{name}/{value} [post]
 func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
@@ -65,6 +91,19 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Find godoc
+// @Tags Info
+// @Summary Find metric by type and name
+// @ID findMetric
+// @Accept  text/html
+// @Produce text/html
+// @Param type path string true "metric type [counter, gauge]"
+// @Param name path string true "metric name"
+// @Success 200 {string} number "metric's value, for example 200.4"
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /value/{type}/{name} [get]
 func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	mType, err := h.getType(r)
 	if err != nil {
@@ -93,6 +132,17 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateJson godoc
+// @Tags Update
+// @Summary Update metric with json format
+// @ID updateJSONMetric
+// @Accept  application/json
+// @Produce application/json
+// @Param metric body model.Metric true "Metric's data"
+// @Success 200 {object} model.Metric "Metric's data"
+// @Failure 400
+// @Failure 500
+// @Router /update [post]
 func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	var metric model.Metric
 	d := json.NewDecoder(r.Body)
@@ -122,6 +172,18 @@ func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FindJson godoc
+// @Tags Info
+// @Summary Get metric info with json format
+// @ID findJSONMetric
+// @Accept  application/json
+// @Produce application/json
+// @Param metric body model.Metric true "Metric's data"
+// @Success 200 {object} model.Metric "Metric's data"
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /value/ [post]
 func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	var metric model.Metric
 	data := json.NewDecoder(r.Body)
@@ -152,6 +214,15 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Get godoc
+// @Tags Info
+// @Summary Get metrics list
+// @ID getMetric
+// @Accept  text/html
+// @Produce text/html
+// @Success 200
+// @Failure 500
+// @Router / [get]
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
@@ -174,6 +245,15 @@ func (h *MetricHandlers) checkType(t string) error {
 	return nil
 }
 
+// Ping godoc
+// @Tags Info
+// @Summary Check storage status
+// @ID pingMetric
+// @Accept  text/html
+// @Produce text/html
+// @Success 200
+// @Failure 500
+// @Router /ping [get]
 func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
 	if err := h.Storage.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -187,6 +267,17 @@ func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Updates godoc
+// @Tags Update
+// @Summary Mass update metrics with json format
+// @ID updatesMetric
+// @Accept  application/json
+// @Produce application/json
+// @Param metric body []model.Metric true "Metric's data"
+// @Success 200
+// @Failure 400
+// @Failure 500
+// @Router /updates/ [post]
 func (h *MetricHandlers) Updates(w http.ResponseWriter, r *http.Request) {
 	var metrics []model.Metric
 	d := json.NewDecoder(r.Body)

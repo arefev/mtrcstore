@@ -13,10 +13,10 @@ type Action func() error
 type CheckErr func(err error) bool
 
 type retry struct {
-	action   Action // The action function that retry calls.
+	action   Action   // The action function that retry calls.
 	checkErr CheckErr // A function that checks for an error.
-	attempt  uint // Number of attempts made
-	max      uint // Number of maximum attempts
+	attempt  uint     // Number of attempts made
+	max      uint     // Number of maximum attempts
 }
 
 // Create new retry object.

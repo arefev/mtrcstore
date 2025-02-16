@@ -287,19 +287,19 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "delta": {
-                    "description": "значение метрики в случае передачи counter",
+                    "description": "metric value in case of counter transfer",
                     "type": "integer"
                 },
                 "id": {
-                    "description": "имя метрики",
+                    "description": "metric name",
                     "type": "string"
                 },
                 "type": {
-                    "description": "параметр, принимающий значение gauge или counter",
+                    "description": "parameter that takes the value gauge or counter",
                     "type": "string"
                 },
                 "value": {
-                    "description": "значение метрики в случае передачи gauge",
+                    "description": "metric value in case of gauge transfer",
                     "type": "number"
                 }
             }

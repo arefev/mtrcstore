@@ -38,6 +38,10 @@ agent-build:
 gofmt:
 	gofmt -s -w ./
 
+swag:
+	swag init --parseInternal --parseDependency -g internal/server/handler/metric.go
+.PHONY: swag
+
 containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 

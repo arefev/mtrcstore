@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-// The action function that retry calls.
+// Action function that retry calls.
 type Action func() error
 
-// A function that checks for an error.
+// CheckErr function checks for an error.
 type CheckErr func(err error) bool
 
 type retry struct {
@@ -19,7 +19,7 @@ type retry struct {
 	max      uint     // Number of maximum attempts
 }
 
-// Create new retry object.
+// New create retry object.
 func New(action Action, checkErr CheckErr, count uint) *retry {
 	return &retry{
 		attempt:  1,
@@ -49,12 +49,12 @@ func (r *retry) Run() error {
 	return nil
 }
 
-// Stops program execution for the period specified in getDuration.
+// wait stop program execution for the period specified in getDuration.
 func (r *retry) wait() {
 	time.Sleep(r.getDuration())
 }
 
-// Specifies the period for which the program execution will stop.
+// getDuration specifies the period for which the program execution will stop.
 func (r *retry) getDuration() time.Duration {
 	return (1 + 2*time.Duration(r.attempt-1)) * time.Second
 }

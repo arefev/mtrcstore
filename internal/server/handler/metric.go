@@ -39,6 +39,7 @@ func NewMetricHandlers(s repository.Storage, log *zap.Logger) *MetricHandlers {
 }
 
 // Update godoc
+//
 //	@Tags		Update
 //	@Summary	Update metric by type and name
 //	@ID			updateMetric
@@ -92,6 +93,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // Find godoc
+//
 //	@Tags		Info
 //	@Summary	Find metric by type and name
 //	@ID			findMetric
@@ -132,7 +134,8 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateJson godoc
+// UpdateJSON godoc
+//
 //	@Tags		Update
 //	@Summary	Update metric with json format
 //	@ID			updateJSONMetric
@@ -172,7 +175,8 @@ func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// FindJson godoc
+// FindJSON godoc
+//
 //	@Tags		Info
 //	@Summary	Get metric info with json format
 //	@ID			findJSONMetric
@@ -215,6 +219,7 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get godoc
+//
 //	@Tags		Info
 //	@Summary	Get metrics list
 //	@ID			getMetric
@@ -246,6 +251,7 @@ func (h *MetricHandlers) checkType(t string) error {
 }
 
 // Ping godoc
+//
 //	@Tags		Info
 //	@Summary	Check storage status
 //	@ID			pingMetric
@@ -268,6 +274,7 @@ func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 // Updates godoc
+//
 //	@Tags		Update
 //	@Summary	Mass update metrics with json format
 //	@ID			updatesMetric

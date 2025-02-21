@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -525,6 +528,163 @@ func Test_FindFullUrl(t *testing.T) {
 					value = test.want.metric.ValueString()
 				}
 				require.Contains(t, string(res.Body()), value)
+			}
+		})
+	}
+}
+
+func TestConfigSuccess(t *testing.T) {
+	t.Run("test config success", func(t *testing.T) {
+		logLevel := "debug"
+		args := []string{
+			"-l=" + logLevel,
+		}
+		conf, err := NewConfig(args)
+		require.NoError(t, err)
+		require.Equal(t, logLevel, conf.LogLevel)
+	})
+}
+
+func Test_Ping(t *testing.T) {
+	type want struct {
+		urlPath    string
+		statusCode int
+		err        error
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "ping success",
+			want: want{
+				urlPath:    "/ping",
+				statusCode: http.StatusOK,
+				err:        nil,
+			},
+		},
+		{
+			name: "ping fail",
+			want: want{
+				urlPath:    "/ping",
+				statusCode: http.StatusInternalServerError,
+				err:        errors.New("test"),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			storage := mocks.NewMockStorage(ctrl)
+			storage.
+				EXPECT().
+				Ping().
+				MinTimes(1).
+				Return(test.want.err)
+
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
+
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog, "")
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
+			req := resty.New().R()
+			req.Method = http.MethodGet
+			req.URL = srv.URL + test.want.urlPath
+
+			require.NoError(t, err)
+
+			res, err := req.Send()
+			require.NoError(t, err)
+			require.Equal(t, test.want.statusCode, res.StatusCode())
+		})
+	}
+}
+
+func Test_MassUpdate(t *testing.T) {
+	const urlPath string = "/updates/"
+	var delta int64 = 1
+	var value = 1.55
+
+	type want struct {
+		metrics    []model.Metric
+		err        error
+		statusCode int
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "mass save success",
+			want: want{
+				metrics: []model.Metric{
+					{
+						ID:    "PollCounter",
+						MType: "counter",
+						Delta: &delta,
+					},
+					{
+						ID:    "Alloc",
+						MType: "gauge",
+						Value: &value,
+					},
+				},
+				err:        nil,
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			jsonValue, err := json.Marshal(test.want.metrics)
+			require.NoError(t, err)
+
+			secretKey := "test"
+			key := []byte(secretKey)
+			h := hmac.New(sha256.New, key)
+
+			_, err = h.Write(jsonValue)
+			require.NoError(t, err)
+
+			dst := h.Sum(nil)
+
+			storage := mocks.NewMockStorage(ctrl)
+			storage.EXPECT().MassSave(test.want.metrics).MaxTimes(1).Return(test.want.err)
+
+			cLog, err := logger.Build("debug")
+			require.NoError(t, err)
+
+			metricHandlers := handler.NewMetricHandlers(storage, cLog)
+
+			r := server.InitRouter(metricHandlers, cLog, secretKey)
+			srv := httptest.NewServer(r)
+			defer srv.Close()
+
+			req := resty.New().R()
+			req.Method = http.MethodPost
+			req.SetHeader("Content-type", "application/json")
+			req.SetHeader("HashSHA256", hex.EncodeToString(dst))
+			req.URL = srv.URL + urlPath
+
+			req.Body = jsonValue
+
+			res, err := req.Send()
+			require.NoError(t, err)
+			require.Equal(t, test.want.statusCode, res.StatusCode())
+
+			if test.want.err == nil {
+				require.Contains(t, string(res.Body()), "Mass save successful!")
 			}
 		})
 	}

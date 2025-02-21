@@ -26,6 +26,7 @@ vendor/
 
 # other
 *.env
-*.json
+storage.json
 golangci-lint
 q.md
+test.html

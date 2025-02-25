@@ -35,6 +35,9 @@ agent-run: agent-build
 agent-build:
 	go build -o ./cmd/agent/agent ./cmd/agent/
 
+staticlint-build:
+	go build -o ./cmd/staticlint/staticlint ./cmd/staticlint/
+
 gofmt:
 	gofmt -s -w ./
 

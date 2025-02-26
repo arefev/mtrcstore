@@ -23,11 +23,7 @@ jobs:
           out-file-path: .tools
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup autotest binary
+      - name: Run custom statictest
         run: |
-          chmod -R +x $GITHUB_WORKSPACE/.tools/statictest
-          mv $GITHUB_WORKSPACE/.tools/statictest /usr/local/bin/statictest
-
-      - name: Run statictest
-        run: |
-          go vet -vettool=$(which statictest) ./...
+          go build -buildvcs=false -o ./cmd/staticlint/staticlint ./cmd/staticlint/
+          ./cmd/staticlint/staticlint ./...

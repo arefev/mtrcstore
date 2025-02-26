@@ -136,9 +136,9 @@ func (r *Report) request(data any, url string) error {
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip")
 
-	jsonBody, err := json.Marshal(data)
-	if err != nil {
-		return r.requestError(err)
+	jsonBody, mErr := json.Marshal(data)
+	if mErr != nil {
+		return r.requestError(mErr)
 	}
 
 	if r.secretKey != "" {

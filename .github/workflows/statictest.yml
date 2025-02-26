@@ -34,5 +34,5 @@ jobs:
 
       - name: Run custom statictest
         run: |
-          go build -o ./cmd/staticlint/staticlint ./cmd/staticlint/
+          go build -buildvcs=false -o ./cmd/staticlint/staticlint ./cmd/staticlint/
           ./cmd/staticlint/staticlint ./...

@@ -1,3 +1,16 @@
+// staticlint is multichecker with analyzers
+//
+//	printf - check consistency of Printf format strings and arguments
+//	shadow - check for possible unintended shadowing of variables
+//	structtag - checks struct field tags are well formed
+//	staticcheck - find bugs and performance issues
+//	quickfix - implement code refactorings
+//	stylecheck - enforce style rules
+//	osexitcheck - check using os.Exit function in main
+//
+// Steps for run checker:
+//  1. Build go build -o ./cmd/staticlint/staticlint ./cmd/staticlint/
+//  2. Run ./cmd/staticlint/staticlint ./...
 package main
 
 import (
@@ -16,7 +29,7 @@ import (
 
 var OSExitCheckAnalyzer = &analysis.Analyzer{
 	Name: "osexitcheck",
-	Doc:  "check for using os.Exit function",
+	Doc:  "check using os.Exit function in main",
 	Run:  RunOSExitCheckAnalyzer,
 }
 

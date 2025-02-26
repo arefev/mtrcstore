@@ -14,6 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -21,6 +27,8 @@ func main() {
 }
 
 func run() error {
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+
 	config, err := NewConfig(os.Args[1:])
 
 	if err != nil {

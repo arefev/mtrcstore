@@ -31,3 +31,8 @@ jobs:
       - name: Run statictest
         run: |
           go vet -vettool=$(which statictest) ./...
+
+      - name: Run custom statictest
+        run: |
+          go build -o ./cmd/staticlint/staticlint ./cmd/staticlint/
+          ./cmd/staticlint/staticlint ./...

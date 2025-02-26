@@ -31,8 +31,10 @@ func run() error {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
 
+	requestClient := service.Client{}
+
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address, config.SecretKey)
+	report := service.NewReport(&storage, config.Address, config.SecretKey, requestClient)
 
 	worker := agent.Worker{
 		WorkerPool:     service.NewWorkerPool(report, config.RateLimit),

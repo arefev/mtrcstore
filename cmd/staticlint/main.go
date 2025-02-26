@@ -1,4 +1,4 @@
-// staticlint is multichecker with analyzers
+// Staticlint is multichecker with analyzers
 //
 //	printf - check consistency of Printf format strings and arguments
 //	shadow - check for possible unintended shadowing of variables

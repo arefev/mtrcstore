@@ -21,7 +21,7 @@ var OSExitCheckAnalyzer = &analysis.Analyzer{
 }
 
 func main() {
-	var checks []*analysis.Analyzer
+	checks := make([]*analysis.Analyzer, 0)
 	for _, v := range staticcheck.Analyzers {
 		checks = append(checks, v.Analyzer)
 	}
@@ -58,33 +58,33 @@ func main() {
 	)
 }
 
-func RunOSExitCheckAnalyzer(pass *analysis.Pass) (interface{}, error) {
+func RunOSExitCheckAnalyzer(pass *analysis.Pass) (any, error) {
 	const (
-        pkgName = "os"
-        runFuncName = "Exit"
-        fileName = "main"
-        declFuncName = "main"
-        reportText = "os.Exit function using"
-    )
-    
+		pkgName      = "os"
+		runFuncName  = "Exit"
+		fileName     = "main"
+		declFuncName = "main"
+		reportText   = "os.Exit function using"
+	)
+
 	for _, file := range pass.Files {
-        fName := ""
-        ast.Inspect(file, func(n ast.Node) bool {
-            switch x := n.(type) {
-            case *ast.CallExpr:
-                if s, ok := x.Fun.(*ast.SelectorExpr); ok {
-                    pkg := fmt.Sprintf("%v", s.X)
-                    if file.Name.String() == fileName && fName == declFuncName && pkg == pkgName && s.Sel.Name == runFuncName {
-                        if _, ok := x.Args[0].(*ast.BasicLit); ok {
-                            pass.Reportf(x.Pos(), reportText)
-                        }
-                    }
-                }
-            case *ast.FuncDecl:
-                fName = x.Name.Name
-            }
-            return true
-        })
+		fName := ""
+		ast.Inspect(file, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.CallExpr:
+				if s, ok := x.Fun.(*ast.SelectorExpr); ok {
+					pkg := fmt.Sprintf("%v", s.X)
+					if file.Name.String() == fileName && fName == declFuncName && pkg == pkgName && s.Sel.Name == runFuncName {
+						if _, ok := x.Args[0].(*ast.BasicLit); ok {
+							pass.Reportf(x.Pos(), reportText)
+						}
+					}
+				}
+			case *ast.FuncDecl:
+				fName = x.Name.Name
+			}
+			return true
+		})
 	}
 	return nil, nil
 }

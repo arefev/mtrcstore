@@ -2,6 +2,7 @@ package repository
 
 import (
 	"io"
+	"io/fs"
 	"os"
 	"testing"
 	"time"
@@ -19,13 +20,14 @@ func TestFileSave(t *testing.T) {
 		var delta int64 = 1
 		mtrc := model.Metric{
 			Delta: &delta,
-			ID: "PollCounter",
+			ID:    "PollCounter",
 			MType: "counter",
 		}
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
-		rep.Save(mtrc)
-		
+		err = rep.Save(mtrc)
+		require.NoError(t, err)
+
 		saved, err := rep.findCounter("PollCounter")
 		require.NoError(t, err)
 		require.Equal(t, mtrc.Delta, saved.Delta)
@@ -40,13 +42,14 @@ func TestFileWrite(t *testing.T) {
 		var delta int64 = 1
 		mtrc := model.Metric{
 			Delta: &delta,
-			ID: "PollCounter",
+			ID:    "PollCounter",
 			MType: "counter",
 		}
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
-		rep.Save(mtrc)
-		
+		err = rep.Save(mtrc)
+		require.NoError(t, err)
+
 		rep.write()
 		rep.load()
 
@@ -61,27 +64,27 @@ func TestFileWrite(t *testing.T) {
 
 func TestFileWorker(t *testing.T) {
 	t.Run("file worker success", func(t *testing.T) {
+		const filePermission fs.FileMode = 0o644
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
 
 		var delta int64 = 3
 		mtrc := model.Metric{
 			Delta: &delta,
-			ID: "PollCounter",
+			ID:    "PollCounter",
 			MType: "counter",
 		}
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
 		rep.WorkerRun()
-		rep.Save(mtrc)
+		err = rep.Save(mtrc)
+		require.NoError(t, err)
 
 		time.Sleep(time.Second * 3)
 
-
-		file, err := os.OpenFile("./storage_test.json", os.O_RDONLY|os.O_CREATE, 0o644)
+		file, err := os.OpenFile("./storage_test.json", os.O_RDONLY|os.O_CREATE, filePermission)
 		require.NoError(t, err)
 
-		defer file.Close()
 		data, err := io.ReadAll(file)
 		require.NoError(t, err)
 		require.Contains(t, string(data), `"PollCounter":3`)
@@ -93,23 +96,24 @@ func TestFileWorker(t *testing.T) {
 
 func TestFileEvent(t *testing.T) {
 	t.Run("file event success", func(t *testing.T) {
+		const filePermission fs.FileMode = 0o644
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
 
 		var delta int64 = 4
 		mtrc := model.Metric{
 			Delta: &delta,
-			ID: "PollCounter",
+			ID:    "PollCounter",
 			MType: "counter",
 		}
 
 		rep := NewFile(0, "./storage_test.json", false, cLog)
-		rep.Save(mtrc)
-
-		file, err := os.OpenFile("./storage_test.json", os.O_RDONLY|os.O_CREATE, 0o644)
+		err = rep.Save(mtrc)
 		require.NoError(t, err)
 
-		defer file.Close()
+		file, err := os.OpenFile("./storage_test.json", os.O_RDONLY|os.O_CREATE, filePermission)
+		require.NoError(t, err)
+
 		data, err := io.ReadAll(file)
 		require.NoError(t, err)
 		require.Contains(t, string(data), `"PollCounter":4`)

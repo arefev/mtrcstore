@@ -138,9 +138,9 @@ func (rep *databaseRep) MassSave(elems []model.Metric) error {
 		}
 
 		defer func() {
-			if err := tx.Rollback(); err != nil {
-				if !errors.Is(err, sql.ErrTxDone) {
-					rep.log.Error("rep db mass save rollback failed", zap.Error(err))
+			if rErr := tx.Rollback(); rErr != nil {
+				if !errors.Is(rErr, sql.ErrTxDone) {
+					rep.log.Error("rep db mass save rollback failed", zap.Error(rErr))
 				}
 			}
 		}()

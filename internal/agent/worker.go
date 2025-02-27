@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"runtime"
@@ -16,7 +18,9 @@ type Worker struct {
 	ReportInterval int
 }
 
-func (w *Worker) Run() error {
+var ErrWorkerCanceled = errors.New("worker cancel by context")
+
+func (w *Worker) Run(ctx context.Context) error {
 	var memStats runtime.MemStats
 	readTime := time.NewTicker(time.Duration(w.PollInterval) * time.Second).C
 	sendTime := time.NewTicker(time.Duration(w.ReportInterval) * time.Second).C
@@ -25,6 +29,8 @@ func (w *Worker) Run() error {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return ErrWorkerCanceled
 		case <-readTime:
 			log.Println("readTime")
 			if err := w.read(&memStats); err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
@@ -688,4 +690,33 @@ func Test_MassUpdate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestServerRunWithMemory(t *testing.T) {
+	t.Run("server run with memory success", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+		defer cancel()
+		args := []string{
+			"-l=debug",
+			"-a=localhost:8080",
+		}
+
+		require.ErrorIs(t, run(ctx, args), http.ErrServerClosed)
+	})
+}
+
+func TestServerRunWithFile(t *testing.T) {
+	t.Run("server run with file success", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+		defer cancel()
+		args := []string{
+			"-l=debug",
+			"-a=localhost:8080",
+			"-f=./storage.json",
+			"-r=false",
+		}
+
+		require.ErrorIs(t, run(ctx, args), http.ErrServerClosed)
+		require.FileExists(t, "./storage.json")
+	})
 }

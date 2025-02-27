@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -10,18 +12,28 @@ import (
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"golang.org/x/sync/errgroup"
 
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
-	if err := run(); err != nil {
+	ctx := context.Background()
+	if err := run(ctx, os.Args[1:]); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run() error {
-	config, err := NewConfig(os.Args[1:])
+func run(ctx context.Context, args []string) error {
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+
+	config, err := NewConfig(args)
 
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
@@ -48,6 +60,21 @@ func run() error {
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
 	r := server.InitRouter(metricHandlers, cLog, config.SecretKey)
 
+	g, gCtx := errgroup.WithContext(ctx)
+	serv := http.Server{
+		Addr:    config.Address,
+		Handler: r,
+		BaseContext: func(_ net.Listener) context.Context {
+			return gCtx
+		},
+	}
+
+	g.Go(func() error {
+		<-ctx.Done()
+		cLog.Info("Server stopped")
+		return serv.Shutdown(ctx)
+	})
+
 	cLog.Info(
 		"Server running",
 		zap.String("address", config.Address),
@@ -55,7 +82,13 @@ func run() error {
 		zap.String("storage type", storageType),
 	)
 
-	return fmt.Errorf("main run() failed: %w", http.ListenAndServe(config.Address, r))
+	g.Go(serv.ListenAndServe)
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("exit reason: %w", err)
+	}
+
+	return nil
 }
 
 func initStorage(config *Config, cLog *zap.Logger) (repository.Storage, string, error) {

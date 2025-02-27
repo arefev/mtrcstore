@@ -15,7 +15,6 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/arefev/mtrcstore/internal/retry"
-	"github.com/go-resty/resty/v2"
 )
 
 type Gauge float64
@@ -30,27 +29,30 @@ type Storage interface {
 	GetCounters() map[string]Counter
 }
 
+type Sender interface {
+	DoRequest(url string, headers map[string]string, body any) error
+}
+
 type Report struct {
 	Storage       Storage
+	sender        Sender
 	updateURL     string
 	massUpdateURL string
 	gaugeName     string
 	counterName   string
 	secretKey     string
-	client        resty.Client
+	host          string
 }
 
-func NewReport(s Storage, host string, secretKey string) *Report {
+func NewReport(s Storage, host string, secretKey string, sender Sender) *Report {
 	const (
-		contentType       = "text/plain"
 		protocol          = "http://"
-		updateURLPath     = "update"
-		massUpdateURLPath = "updates/"
+		updateURLPath     = "/update"
+		massUpdateURLPath = "/updates/"
 		counterName       = "counter"
 		gaugeName         = "gauge"
 	)
 
-	client := resty.New().SetBaseURL(protocol + host)
 	return &Report{
 		Storage:       s,
 		updateURL:     updateURLPath,
@@ -58,7 +60,8 @@ func NewReport(s Storage, host string, secretKey string) *Report {
 		gaugeName:     gaugeName,
 		counterName:   counterName,
 		secretKey:     secretKey,
-		client:        *client,
+		sender:        sender,
+		host:          protocol + host,
 	}
 }
 
@@ -132,13 +135,14 @@ func (r *Report) ClearCounter() {
 }
 
 func (r *Report) request(data any, url string) error {
-	client := r.client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip")
+	headers := map[string]string{
+		"Content-Type":     "application/json",
+		"Content-Encoding": "gzip",
+	}
 
-	jsonBody, err := json.Marshal(data)
-	if err != nil {
-		return r.requestError(err)
+	jsonBody, mErr := json.Marshal(data)
+	if mErr != nil {
+		return r.requestError(mErr)
 	}
 
 	if r.secretKey != "" {
@@ -147,7 +151,7 @@ func (r *Report) request(data any, url string) error {
 			return r.requestError(err)
 		}
 
-		client.SetHeader("HashSHA256", hex.EncodeToString(hash))
+		headers["HashSHA256"] = hex.EncodeToString(hash)
 	}
 
 	body, err := r.compress(jsonBody)
@@ -155,7 +159,7 @@ func (r *Report) request(data any, url string) error {
 		return r.requestError(err)
 	}
 
-	if _, err := client.SetBody(body).Post(url); err != nil {
+	if err := r.sender.DoRequest(r.host+url, headers, body); err != nil {
 		return r.requestError(err)
 	}
 

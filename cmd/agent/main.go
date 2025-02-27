@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -10,21 +11,30 @@ import (
 	"github.com/arefev/mtrcstore/internal/agent/service"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
 func main() {
-	if err := run(); err != nil {
+	ctx := context.Background()
+	requestClient := service.Client{}
+	if err := run(ctx, os.Args[1:], &requestClient); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run() error {
-	config, err := NewConfig(os.Args[1:])
+func run(ctx context.Context, args []string, sender service.Sender) error {
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
+	config, err := NewConfig(args)
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
 
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address, config.SecretKey)
+	report := service.NewReport(&storage, config.Address, config.SecretKey, sender)
 
 	worker := agent.Worker{
 		WorkerPool:     service.NewWorkerPool(report, config.RateLimit),
@@ -40,5 +50,5 @@ func run() error {
 		config.RateLimit,
 	)
 
-	return fmt.Errorf("main run() failed: %w", worker.Run())
+	return fmt.Errorf("main run() failed: %w", worker.Run(ctx))
 }

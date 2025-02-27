@@ -562,6 +562,9 @@ issues:
     - path: "_test\\.go"
       linters:
         - dupl
+    - path: "cmd/staticlint/main\\.go"
+      linters:
+        - nilnil
   fix: false
   max-issues-per-linter: 0
   max-same-issues: 0

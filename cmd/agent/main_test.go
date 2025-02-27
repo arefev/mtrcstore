@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/arefev/mtrcstore/internal/agent"
+	mock_service "github.com/arefev/mtrcstore/internal/agent/service/mocks"
 	"github.com/stretchr/testify/require"
+	"github.com/golang/mock/gomock"
 )
 
 func TestConfigSuccess(t *testing.T) {
@@ -27,9 +28,16 @@ func TestRunSuccess(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 4)
 		defer cancel()
 
-		os.Args = []string{
-			"-p 1",
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		client := mock_service.NewMockSender(ctrl)
+		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
+
+		args := []string{
+			"-p=1",
+			"-r=2",
 		}
-		require.ErrorIs(t, run(ctx), agent.ErrWorkerCanceled)
+		require.ErrorIs(t, run(ctx, args, client), agent.ErrWorkerCanceled)
 	})
 }

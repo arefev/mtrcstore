@@ -19,25 +19,24 @@ var (
 
 func main() {
 	ctx := context.Background()
-	if err := run(ctx); err != nil {
+	requestClient := service.Client{}
+	if err := run(ctx, os.Args[1:], &requestClient); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, args []string, sender service.Sender) error {
 	
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
-	config, err := NewConfig(os.Args[1:])
+	config, err := NewConfig(args)
 
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
 
-	requestClient := service.Client{}
-
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address, config.SecretKey, &requestClient)
+	report := service.NewReport(&storage, config.Address, config.SecretKey, sender)
 
 	worker := agent.Worker{
 		WorkerPool:     service.NewWorkerPool(report, config.RateLimit),

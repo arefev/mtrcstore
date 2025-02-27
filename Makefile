@@ -49,9 +49,11 @@ containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
 test: server-build-cover
-	go test ./... -cover -coverprofile=coverage.out && \
+	go test ./... -cover -coverprofile=coverage.out.tmp && \
+	cat coverage.out.tmp | grep -v "/mocks/" | grep -v "_generated.go"> coverage.out
 	go tool cover -html coverage.out -o test.html && \
-	go tool cover -func=coverage.out
+	go tool cover -func=coverage.out && \
+	rm coverage.out.tmp
 .PHONY: test
 
 test-clear: 

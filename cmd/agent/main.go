@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -17,12 +18,14 @@ var (
 )
 
 func main() {
-	if err := run(); err != nil {
+	ctx := context.Background()
+	if err := run(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run() error {
+func run(ctx context.Context) error {
+	
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
 	config, err := NewConfig(os.Args[1:])
@@ -34,7 +37,7 @@ func run() error {
 	requestClient := service.Client{}
 
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address, config.SecretKey, requestClient)
+	report := service.NewReport(&storage, config.Address, config.SecretKey, &requestClient)
 
 	worker := agent.Worker{
 		WorkerPool:     service.NewWorkerPool(report, config.RateLimit),
@@ -50,5 +53,5 @@ func run() error {
 		config.RateLimit,
 	)
 
-	return fmt.Errorf("main run() failed: %w", worker.Run())
+	return fmt.Errorf("main run() failed: %w", worker.Run(ctx))
 }

@@ -8,7 +8,7 @@ import (
 
 type Client struct{}
 
-func (c Client) doRequest(url string, headers map[string]string, body any) error {
+func (c *Client) DoRequest(url string, headers map[string]string, body any) error {
 	request := resty.New().R()
 	for k, v := range headers {
 		request.SetHeader(k, v)

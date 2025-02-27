@@ -30,7 +30,7 @@ type Storage interface {
 }
 
 type Sender interface {
-	doRequest(url string, headers map[string]string, body any) error
+	DoRequest(url string, headers map[string]string, body any) error
 }
 
 type Report struct {
@@ -159,7 +159,7 @@ func (r *Report) request(data any, url string) error {
 		return r.requestError(err)
 	}
 
-	if err := r.sender.doRequest(r.host+url, headers, body); err != nil {
+	if err := r.sender.DoRequest(r.host+url, headers, body); err != nil {
 		return r.requestError(err)
 	}
 

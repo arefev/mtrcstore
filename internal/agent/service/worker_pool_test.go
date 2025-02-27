@@ -3,6 +3,7 @@ package service_test
 import (
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/arefev/mtrcstore/internal/agent/repository"
 	"github.com/arefev/mtrcstore/internal/agent/service"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestWorkerPoolRunSuccess(t *testing.T) {
-	t.Run("get worker pool run success", func(t *testing.T) {
+	t.Run("worker pool run success", func(t *testing.T) {
 		var memStats runtime.MemStats
 
 		ctrl := gomock.NewController(t)
@@ -20,8 +21,9 @@ func TestWorkerPoolRunSuccess(t *testing.T) {
 
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
+		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", client)
+		report := service.NewReport(&storage, "localhost:8080", "", client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)
@@ -37,6 +39,7 @@ func TestWorkerPoolRunSuccess(t *testing.T) {
 		pool := service.NewWorkerPool(report, 3)
 		pool.Run()
 		pool.Send()
+		time.Sleep(time.Second * 2)
 
 		counter = report.Storage.GetCounters()
 		require.Equal(t, 0, int(counter["PollCount"]))

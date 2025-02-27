@@ -7,8 +7,8 @@ import (
 
 	"github.com/arefev/mtrcstore/internal/agent"
 	mock_service "github.com/arefev/mtrcstore/internal/agent/service/mocks"
-	"github.com/stretchr/testify/require"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigSuccess(t *testing.T) {
@@ -25,7 +25,7 @@ func TestConfigSuccess(t *testing.T) {
 
 func TestRunSuccess(t *testing.T) {
 	t.Run("test run success", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 4)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*4)
 		defer cancel()
 
 		ctrl := gomock.NewController(t)

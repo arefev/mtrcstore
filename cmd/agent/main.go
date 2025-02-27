@@ -26,11 +26,9 @@ func main() {
 }
 
 func run(ctx context.Context, args []string, sender service.Sender) error {
-	
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
 	config, err := NewConfig(args)
-
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
 	}

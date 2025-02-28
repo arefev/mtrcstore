@@ -1,10 +1,13 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
 )
+
+var ErrRequestFail = errors.New("doRequest failed")
 
 type Client struct{}
 
@@ -15,7 +18,7 @@ func (c *Client) DoRequest(url string, headers map[string]string, body any) erro
 	}
 
 	if _, err := request.SetBody(body).Post(url); err != nil {
-		return fmt.Errorf("doRequest failed: %w", err)
+		return fmt.Errorf("%w: %w", ErrRequestFail, err)
 	}
 
 	return nil

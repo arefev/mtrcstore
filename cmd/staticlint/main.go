@@ -85,14 +85,23 @@ func RunOSExitCheckAnalyzer(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch x := n.(type) {
 			case *ast.CallExpr:
-				if s, ok := x.Fun.(*ast.SelectorExpr); ok {
-					pkg := fmt.Sprintf("%v", s.X)
-					if file.Name.String() == fileName && fName == declFuncName && pkg == pkgName && s.Sel.Name == runFuncName {
-						if _, ok := x.Args[0].(*ast.BasicLit); ok {
-							pass.Reportf(x.Pos(), reportText)
-						}
-					}
+				s, ok := x.Fun.(*ast.SelectorExpr)
+				if !ok {
+					return true
 				}
+
+				pkg := fmt.Sprintf("%v", s.X)
+				ok = file.Name.String() == fileName && fName == declFuncName && pkg == pkgName && s.Sel.Name == runFuncName
+				if !ok {
+					return true
+				}
+
+				_, ok = x.Args[0].(*ast.BasicLit)
+				if !ok {
+					return true
+				}
+
+				pass.Reportf(x.Pos(), reportText)
 			case *ast.FuncDecl:
 				fName = x.Name.Name
 			}

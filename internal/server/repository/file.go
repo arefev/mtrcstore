@@ -24,7 +24,7 @@ type file struct {
 func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 	const filePermission fs.FileMode = 0o644
 
-	file := file{
+	f := file{
 		memory:          *NewMemory(),
 		fileStoragePath: filePath,
 		filePermission:  filePermission,
@@ -35,10 +35,10 @@ func NewFile(intrvl int, filePath string, restore bool, log *zap.Logger) *file {
 	}
 
 	if restore {
-		file.load()
+		f.load()
 	}
 
-	return &file
+	return &f
 }
 
 func (f *file) load() {

@@ -21,7 +21,7 @@ server-run: server-build
 	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081"
 
 server-build:
-	go build -o ./cmd/server/server ./cmd/server/
+	go build -ldflags "-X main.buildVersion=v1.0.1 -X main.buildCommit='test' -X 'main.buildDate=$(shell date +'%Y/%m/%d %H:%M:%S')'" -o ./cmd/server/server ./cmd/server/
 
 server-build-cover:
 	go build -cover -o ./cmd/server/server ./cmd/server/
@@ -33,7 +33,10 @@ agent-run: agent-build
 	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}" -a="localhost:8081"
 
 agent-build:
-	go build -o ./cmd/agent/agent ./cmd/agent/
+	go build -ldflags "-X main.buildVersion=v1.0.1 -X main.buildCommit='test' -X 'main.buildDate=$(shell date +'%Y/%m/%d %H:%M:%S')'" -o ./cmd/agent/agent ./cmd/agent/
+
+staticlint-build:
+	go build -o ./cmd/staticlint/staticlint ./cmd/staticlint/
 
 gofmt:
 	gofmt -s -w ./
@@ -46,9 +49,11 @@ containers:
 	$(USER) docker-compose --project-name $(DOCKER_PROJECT_NAME) up -d
 
 test: server-build-cover
-	go test ./... -cover -coverprofile=coverage.out && \
+	go test ./... -cover -coverprofile=coverage.out.tmp && \
+	cat coverage.out.tmp | grep -v "/mocks/" | grep -v "_generated.go"> coverage.out
 	go tool cover -html coverage.out -o test.html && \
-	go tool cover -func=coverage.out
+	go tool cover -func=coverage.out && \
+	rm coverage.out.tmp
 .PHONY: test
 
 test-clear: 

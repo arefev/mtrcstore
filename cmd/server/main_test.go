@@ -69,7 +69,7 @@ func Test_Get(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -156,7 +156,7 @@ func Test_UpdateShortUrl(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -301,7 +301,7 @@ func Test_UpdateFullUrl(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -396,7 +396,7 @@ func Test_FindShortUrl(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -509,7 +509,7 @@ func Test_FindFullUrl(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -592,7 +592,7 @@ func Test_Ping(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, "")
+			r := server.InitRouter(metricHandlers, cLog, "", "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
@@ -669,7 +669,7 @@ func Test_MassUpdate(t *testing.T) {
 
 			metricHandlers := handler.NewMetricHandlers(storage, cLog)
 
-			r := server.InitRouter(metricHandlers, cLog, secretKey)
+			r := server.InitRouter(metricHandlers, cLog, secretKey, "")
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 

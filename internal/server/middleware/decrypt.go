@@ -16,6 +16,11 @@ import (
 
 func (m *Middleware) Decrypt(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if m.cryptoKey == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			m.log.Error("middleware Decrypt: read body failed", zap.Error(err))
@@ -30,10 +35,7 @@ func (m *Middleware) Decrypt(next http.Handler) http.Handler {
 			return
 		}
 
-		bodyCopy := io.NopCloser(bytes.NewBuffer(body))
-
-		r.Body = bodyCopy
-
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 		next.ServeHTTP(w, r)
 	})
 }

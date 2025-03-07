@@ -13,6 +13,7 @@ const (
 	databaseDSN     string = ""
 	fileStoragePath string = ""
 	secretKey       string = ""
+	cryptoKey       string = ""
 	storeInterval   int    = 300
 	restore         bool   = true
 )
@@ -23,6 +24,7 @@ type Config struct {
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	SecretKey       string `env:"KEY"`
+	CryptoKey       string `env:"CRYPTO_KEY"`
 	StoreInterval   int    `env:"STORE_INTERVAL"`
 	Restore         bool   `env:"RESTORE"`
 }
@@ -48,6 +50,7 @@ func (cnf *Config) initFlags(params []string) error {
 	f.StringVar(&cnf.FileStoragePath, "f", fileStoragePath, "file storage path interval")
 	f.StringVar(&cnf.DatabaseDSN, "d", databaseDSN, "db connection string")
 	f.StringVar(&cnf.SecretKey, "k", secretKey, "secret key")
+	f.StringVar(&cnf.CryptoKey, "crypto-key", cryptoKey, "path to file with private key")
 	f.IntVar(&cnf.StoreInterval, "i", storeInterval, "store interval")
 	f.BoolVar(&cnf.Restore, "r", restore, "need restore")
 	if err := f.Parse(params); err != nil {

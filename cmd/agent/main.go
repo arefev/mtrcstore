@@ -34,7 +34,7 @@ func run(ctx context.Context, args []string, sender service.Sender) error {
 	}
 
 	storage := repository.NewMemory()
-	report := service.NewReport(&storage, config.Address, config.SecretKey, sender)
+	report := service.NewReport(&storage, config.Address, config.SecretKey, config.CryptoKey, sender)
 
 	worker := agent.Worker{
 		WorkerPool:     service.NewWorkerPool(report, config.RateLimit),

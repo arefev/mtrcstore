@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
@@ -42,9 +47,10 @@ type Report struct {
 	counterName   string
 	secretKey     string
 	host          string
+	cryptoKey     string
 }
 
-func NewReport(s Storage, host string, secretKey string, sender Sender) *Report {
+func NewReport(s Storage, host string, secretKey string, cryptoKey string, sender Sender) *Report {
 	const (
 		protocol          = "http://"
 		updateURLPath     = "/update"
@@ -60,6 +66,7 @@ func NewReport(s Storage, host string, secretKey string, sender Sender) *Report 
 		gaugeName:     gaugeName,
 		counterName:   counterName,
 		secretKey:     secretKey,
+		cryptoKey:     cryptoKey,
 		sender:        sender,
 		host:          protocol + host,
 	}
@@ -154,6 +161,15 @@ func (r *Report) request(data any, url string) error {
 		headers["HashSHA256"] = hex.EncodeToString(hash)
 	}
 
+	if r.cryptoKey != "" {
+		ecrypted, err := r.encrypt(jsonBody, r.cryptoKey)
+		if err != nil {
+			return r.requestError(err)
+		}
+
+		jsonBody = ecrypted
+	}
+
 	body, err := r.compress(jsonBody)
 	if err != nil {
 		return r.requestError(err)
@@ -168,6 +184,35 @@ func (r *Report) request(data any, url string) error {
 
 func (r *Report) requestError(err error) error {
 	return fmt.Errorf("request failed: %w", err)
+}
+
+func (r *Report) encrypt(data []byte, cryptoKey string) ([]byte, error) {
+	publicKeyPEM, err := os.ReadFile(cryptoKey)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt - ReadFile failed: %w", err)
+	}
+
+	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+	publicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt - Decode failed: %w", err)
+	}
+
+	msgLen := len(data)
+	step := publicKey.(*rsa.PublicKey).Size() - 11
+	var encryptedBytes []byte
+
+	for start := 0; start < msgLen; start += step {
+		finish := min(start+step, msgLen)
+		encryptedBlockBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey.(*rsa.PublicKey), data[start:finish])
+		if err != nil {
+			return nil, fmt.Errorf("encrypt - EncryptPKCS1v15 failed: %w", err)
+		}
+
+		encryptedBytes = append(encryptedBytes, encryptedBlockBytes...)
+	}
+
+	return encryptedBytes, nil
 }
 
 func (r *Report) sign(data []byte) ([]byte, error) {

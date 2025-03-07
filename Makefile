@@ -18,7 +18,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081"
+	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081" -crypto-key="./private.pem"
 
 server-build:
 	go build -ldflags "-X main.buildVersion=v1.0.1 -X main.buildCommit='test' -X 'main.buildDate=$(shell date +'%Y/%m/%d %H:%M:%S')'" -o ./cmd/server/server ./cmd/server/
@@ -30,7 +30,7 @@ server-build-cover:
 agent: agent-run
 
 agent-run: agent-build
-	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}" -a="localhost:8081"
+	./cmd/agent/agent -r 2 -p 1 -k="${SECRET_KEY}" -a="localhost:8081" -crypto-key="./public.pem"
 
 agent-build:
 	go build -ldflags "-X main.buildVersion=v1.0.1 -X main.buildCommit='test' -X 'main.buildDate=$(shell date +'%Y/%m/%d %H:%M:%S')'" -o ./cmd/agent/agent ./cmd/agent/

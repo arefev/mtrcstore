@@ -23,7 +23,7 @@ func TestWorkerPoolRunSuccess(t *testing.T) {
 		client := mock_service.NewMockSender(ctrl)
 		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
 
-		report := service.NewReport(&storage, "localhost:8080", "", client)
+		report := service.NewReport(&storage, "localhost:8080", "", "", client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)

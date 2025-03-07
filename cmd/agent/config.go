@@ -10,6 +10,7 @@ import (
 const (
 	address        = "localhost:8080"
 	secretKey      = ""
+	cryptoKey      = ""
 	pollInterval   = 2
 	reportInterval = 10
 	rateLimit      = 3
@@ -18,6 +19,7 @@ const (
 type Config struct {
 	Address        string `env:"ADDRESS"`
 	SecretKey      string `env:"KEY"`
+	CryptoKey      string `env:"CRYPTO_KEY"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	RateLimit      int    `env:"RATE_LIMIT"`
@@ -40,6 +42,7 @@ func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
 	f.StringVar(&cnf.Address, "a", address, "server address and port")
 	f.StringVar(&cnf.SecretKey, "k", secretKey, "secret key")
+	f.StringVar(&cnf.CryptoKey, "crypto-key", cryptoKey, "path to file with public key")
 	f.IntVar(&cnf.PollInterval, "p", pollInterval, "poll interval")
 	f.IntVar(&cnf.ReportInterval, "r", reportInterval, "report interval")
 	f.IntVar(&cnf.RateLimit, "l", rateLimit, "rate limit")

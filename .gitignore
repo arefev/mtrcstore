@@ -27,6 +27,7 @@ vendor/
 
 # other
 *.env
+*.pem
 storage.json
 golangci-lint
 q.md

@@ -187,24 +187,31 @@ func (r *Report) requestError(err error) error {
 }
 
 func (r *Report) encrypt(data []byte, cryptoKey string) ([]byte, error) {
+	const decreaseKeySize int = 11
+
 	publicKeyPEM, err := os.ReadFile(cryptoKey)
 	if err != nil {
 		return nil, fmt.Errorf("encrypt - ReadFile failed: %w", err)
 	}
 
 	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
-	publicKey, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
+	parsed, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("encrypt - Decode failed: %w", err)
 	}
 
+	publicKey, ok := parsed.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("encrypt - invalid public key type")
+	}
+
 	msgLen := len(data)
-	step := publicKey.(*rsa.PublicKey).Size() - 11
+	step := publicKey.Size() - decreaseKeySize
 	var encryptedBytes []byte
 
 	for start := 0; start < msgLen; start += step {
 		finish := min(start+step, msgLen)
-		encryptedBlockBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey.(*rsa.PublicKey), data[start:finish])
+		encryptedBlockBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, data[start:finish])
 		if err != nil {
 			return nil, fmt.Errorf("encrypt - EncryptPKCS1v15 failed: %w", err)
 		}

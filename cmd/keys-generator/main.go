@@ -5,13 +5,25 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
+	"io/fs"
+	"log"
 	"os"
 )
 
 func main() {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	const bits = 4096
+	const filePermission fs.FileMode = 0o644
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("key generator run - GenerateKey failed: %w", err)
 	}
 
 	publicKey := &privateKey.PublicKey
@@ -21,21 +33,23 @@ func main() {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	})
-	err = os.WriteFile("private.pem", privateKeyPEM, 0644)
+	err = os.WriteFile("private.pem", privateKeyPEM, filePermission)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("key generator run - WriteFile with private key failed: %w", err)
 	}
 
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("key generator run - MarshalPKIXPublicKey failed: %w", err)
 	}
 	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PUBLIC KEY",
 		Bytes: publicKeyBytes,
 	})
-	err = os.WriteFile("public.pem", publicKeyPEM, 0644)
+	err = os.WriteFile("public.pem", publicKeyPEM, filePermission)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("key generator run - WriteFile with public key failed: %w", err)
 	}
+
+	return nil
 }

@@ -26,8 +26,7 @@ var (
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	defer stop()
+	ctx := context.Background()
 
 	if err := run(ctx, os.Args[1:]); err != nil {
 		log.Fatal(err)
@@ -36,6 +35,8 @@ func main() {
 
 func run(ctx context.Context, args []string) error {
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
 	config, err := NewConfig(args)
 	if err != nil {

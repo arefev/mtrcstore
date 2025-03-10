@@ -16,7 +16,7 @@ import (
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
-	"github.com/arefev/mtrcstore/internal/server/mocks"
+	mock_repository "github.com/arefev/mtrcstore/internal/server/mocks"
 	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/go-resty/resty/v2"
 	"github.com/golang/mock/gomock"
@@ -61,8 +61,8 @@ func Test_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
-			storage.EXPECT().Get().MaxTimes(1).Return(test.want.value)
+			storage := mock_repository.NewMockStorage(ctrl)
+			storage.EXPECT().Get(gomock.Any()).MaxTimes(1).Return(test.want.value)
 
 			cLog, err := logger.Build("debug")
 			require.NoError(t, err)
@@ -148,8 +148,8 @@ func Test_UpdateShortUrl(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
-			storage.EXPECT().Save(test.want.metric).MaxTimes(1).Return(test.want.err)
+			storage := mock_repository.NewMockStorage(ctrl)
+			storage.EXPECT().Save(gomock.Any(), test.want.metric).MaxTimes(1).Return(test.want.err)
 
 			cLog, err := logger.Build("debug")
 			require.NoError(t, err)
@@ -293,8 +293,8 @@ func Test_UpdateFullUrl(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
-			storage.EXPECT().Save(test.want.metric).MaxTimes(1).Return(test.want.err)
+			storage := mock_repository.NewMockStorage(ctrl)
+			storage.EXPECT().Save(gomock.Any(), test.want.metric).MaxTimes(1).Return(test.want.err)
 
 			cLog, err := logger.Build("debug")
 			require.NoError(t, err)
@@ -384,10 +384,10 @@ func Test_FindShortUrl(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
+			storage := mock_repository.NewMockStorage(ctrl)
 			storage.
 				EXPECT().
-				Find(test.want.data.ID, test.want.data.MType).
+				Find(gomock.Any(), test.want.data.ID, test.want.data.MType).
 				MaxTimes(1).
 				Return(test.want.metric, test.want.err)
 
@@ -497,10 +497,10 @@ func Test_FindFullUrl(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
+			storage := mock_repository.NewMockStorage(ctrl)
 			storage.
 				EXPECT().
-				Find(test.want.metric.ID, test.want.metric.MType).
+				Find(gomock.Any(), test.want.metric.ID, test.want.metric.MType).
 				MaxTimes(1).
 				Return(test.want.metric, test.want.err)
 
@@ -580,10 +580,10 @@ func Test_Ping(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			storage := mocks.NewMockStorage(ctrl)
+			storage := mock_repository.NewMockStorage(ctrl)
 			storage.
 				EXPECT().
-				Ping().
+				Ping(gomock.Any()).
 				MinTimes(1).
 				Return(test.want.err)
 
@@ -661,8 +661,8 @@ func Test_MassUpdate(t *testing.T) {
 
 			dst := h.Sum(nil)
 
-			storage := mocks.NewMockStorage(ctrl)
-			storage.EXPECT().MassSave(test.want.metrics).MaxTimes(1).Return(test.want.err)
+			storage := mock_repository.NewMockStorage(ctrl)
+			storage.EXPECT().MassSave(gomock.Any(), test.want.metrics).MaxTimes(1).Return(test.want.err)
 
 			cLog, err := logger.Build("debug")
 			require.NoError(t, err)

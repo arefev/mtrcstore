@@ -96,11 +96,11 @@ func (rep *databaseRep) createTableMetrics(ctx context.Context) error {
 	return nil
 }
 
-func (rep *databaseRep) Save(m model.Metric) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+func (rep *databaseRep) Save(ctx context.Context, m model.Metric) error {
+	ctx, cancel := context.WithTimeout(ctx, timeCancel)
 	defer cancel()
 
-	metric, err := rep.Find(m.ID, m.MType)
+	metric, err := rep.Find(ctx, m.ID, m.MType)
 	var action retry.Action
 
 	switch {
@@ -123,12 +123,12 @@ func (rep *databaseRep) Save(m model.Metric) error {
 	return nil
 }
 
-func (rep *databaseRep) MassSave(elems []model.Metric) error {
+func (rep *databaseRep) MassSave(ctx context.Context, elems []model.Metric) error {
 	if len(elems) == 0 {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+	ctx, cancel := context.WithTimeout(ctx, timeCancel)
 	defer cancel()
 
 	action := func() error {
@@ -241,8 +241,8 @@ func (rep *databaseRep) update(ctx context.Context, newMetric model.Metric, oldM
 	return nil
 }
 
-func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+func (rep *databaseRep) Find(ctx context.Context, id string, mType string) (model.Metric, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeCancel)
 	defer cancel()
 	metric := model.Metric{}
 	query := "SELECT type, name, value, delta FROM metrics WHERE type = $1 AND name = $2"
@@ -259,8 +259,8 @@ func (rep *databaseRep) Find(id string, mType string) (model.Metric, error) {
 	return metric, nil
 }
 
-func (rep *databaseRep) Get() map[string]string {
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+func (rep *databaseRep) Get(ctx context.Context) map[string]string {
+	ctx, cancel := context.WithTimeout(ctx, timeCancel)
 	defer cancel()
 	list := make(map[string]string)
 
@@ -288,8 +288,8 @@ func (rep *databaseRep) Get() map[string]string {
 	return list
 }
 
-func (rep *databaseRep) Ping() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), timeCancel)
+func (rep *databaseRep) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, timeCancel)
 	defer cancel()
 
 	action := func() error {

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -110,8 +111,8 @@ func (f *file) write() {
 	f.log.Info("worker data saved by worker")
 }
 
-func (f *file) Save(m model.Metric) error {
-	if err := f.memory.Save(m); err != nil {
+func (f *file) Save(ctx context.Context, m model.Metric) error {
+	if err := f.memory.Save(ctx, m); err != nil {
 		return err
 	}
 

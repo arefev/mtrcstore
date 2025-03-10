@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -44,7 +45,7 @@ func (s *memory) Close() error {
 	return nil
 }
 
-func (s *memory) Save(m model.Metric) error {
+func (s *memory) Save(_ context.Context, m model.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -97,7 +98,7 @@ func (s *memory) findCounter(name string) (model.Metric, error) {
 	return metric, nil
 }
 
-func (s *memory) Find(id string, mType string) (model.Metric, error) {
+func (s *memory) Find(_ context.Context, id string, mType string) (model.Metric, error) {
 	if mType == CounterName {
 		return s.findCounter(id)
 	}
@@ -105,7 +106,7 @@ func (s *memory) Find(id string, mType string) (model.Metric, error) {
 	return s.findGauge(id)
 }
 
-func (s *memory) Get() map[string]string {
+func (s *memory) Get(_ context.Context) map[string]string {
 	all := make(map[string]string)
 	for name, val := range s.Gauge {
 		all[name] = val.String()
@@ -118,13 +119,13 @@ func (s *memory) Get() map[string]string {
 	return all
 }
 
-func (s *memory) Ping() error {
+func (s *memory) Ping(_ context.Context) error {
 	return nil
 }
 
-func (s *memory) MassSave(elems []model.Metric) error {
+func (s *memory) MassSave(ctx context.Context, elems []model.Metric) error {
 	for _, m := range elems {
-		if err := s.Save(m); err != nil {
+		if err := s.Save(ctx, m); err != nil {
 			return fmt.Errorf("mass save failed: %w", err)
 		}
 	}

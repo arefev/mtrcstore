@@ -56,14 +56,14 @@ func NewConfig(params []string) (Config, error) {
 
 func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&cnf.Address, "a", address, "server address and port")
-	f.StringVar(&cnf.SecretKey, "k", secretKey, "secret key")
-	f.StringVar(&cnf.CryptoKey, "crypto-key", cryptoKey, "path to file with public key")
+	f.StringVar(&cnf.Address, "a", cnf.Address, "server address and port")
+	f.StringVar(&cnf.SecretKey, "k", cnf.SecretKey, "secret key")
+	f.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to file with public key")
 	f.StringVar(&cnf.ConfigPath, "c", cnf.ConfigPath, "path to file with config")
 	f.StringVar(&cnf.ConfigPath, "config", cnf.ConfigPath, "path to file with config")
-	f.IntVar(&cnf.PollInterval, "p", pollInterval, "poll interval")
-	f.IntVar(&cnf.ReportInterval, "r", reportInterval, "report interval")
-	f.IntVar(&cnf.RateLimit, "l", rateLimit, "rate limit")
+	f.IntVar(&cnf.PollInterval, "p", cnf.PollInterval, "poll interval")
+	f.IntVar(&cnf.ReportInterval, "r", cnf.ReportInterval, "report interval")
+	f.IntVar(&cnf.RateLimit, "l", cnf.RateLimit, "rate limit")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)
 	}

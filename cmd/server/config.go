@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/caarlos0/env"
 )
@@ -14,23 +16,39 @@ const (
 	fileStoragePath string = ""
 	secretKey       string = ""
 	cryptoKey       string = ""
+	configPath      string = ""
 	storeInterval   int    = 300
 	restore         bool   = true
 )
 
 type Config struct {
-	Address         string `env:"ADDRESS"`
-	LogLevel        string `env:"LOG_LEVEL"`
-	DatabaseDSN     string `env:"DATABASE_DSN"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	SecretKey       string `env:"KEY"`
-	CryptoKey       string `env:"CRYPTO_KEY"`
-	StoreInterval   int    `env:"STORE_INTERVAL"`
-	Restore         bool   `env:"RESTORE"`
+	Address         string `env:"ADDRESS" json:"address"`
+	LogLevel        string `env:"LOG_LEVEL" json:"log_level"`
+	DatabaseDSN     string `env:"DATABASE_DSN" json:"database_dsn"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
+	SecretKey       string `env:"KEY" json:"secret_key"`
+	CryptoKey       string `env:"CRYPTO_KEY" json:"crypto_key"`
+	ConfigPath      string `env:"CONFIG" json:"-"`
+	StoreInterval   int    `env:"STORE_INTERVAL" json:"store_interval"`
+	Restore         bool   `env:"RESTORE" json:"restore"`
 }
 
 func NewConfig(params []string) (Config, error) {
-	cnf := Config{}
+	cnf := Config{
+		Address:         address,
+		LogLevel:        logLevel,
+		DatabaseDSN:     databaseDSN,
+		FileStoragePath: fileStoragePath,
+		SecretKey:       secretKey,
+		CryptoKey:       cryptoKey,
+		ConfigPath:      configPath,
+		StoreInterval:   storeInterval,
+		Restore:         restore,
+	}
+
+	if err := cnf.initConfig(params); err != nil {
+		return Config{}, err
+	}
 
 	if err := cnf.initFlags(params); err != nil {
 		return Config{}, err
@@ -45,14 +63,16 @@ func NewConfig(params []string) (Config, error) {
 
 func (cnf *Config) initFlags(params []string) error {
 	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.StringVar(&cnf.Address, "a", address, "address and port to run server")
-	f.StringVar(&cnf.LogLevel, "l", logLevel, "log level")
-	f.StringVar(&cnf.FileStoragePath, "f", fileStoragePath, "file storage path interval")
-	f.StringVar(&cnf.DatabaseDSN, "d", databaseDSN, "db connection string")
-	f.StringVar(&cnf.SecretKey, "k", secretKey, "secret key")
-	f.StringVar(&cnf.CryptoKey, "crypto-key", cryptoKey, "path to file with private key")
-	f.IntVar(&cnf.StoreInterval, "i", storeInterval, "store interval")
-	f.BoolVar(&cnf.Restore, "r", restore, "need restore")
+	f.StringVar(&cnf.Address, "a", cnf.Address, "address and port to run server")
+	f.StringVar(&cnf.LogLevel, "l", cnf.LogLevel, "log level")
+	f.StringVar(&cnf.FileStoragePath, "f", cnf.FileStoragePath, "file storage path interval")
+	f.StringVar(&cnf.DatabaseDSN, "d", cnf.DatabaseDSN, "db connection string")
+	f.StringVar(&cnf.SecretKey, "k", cnf.SecretKey, "secret key")
+	f.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to file with private key")
+	f.StringVar(&cnf.ConfigPath, "c", cnf.ConfigPath, "path to file with config")
+	f.StringVar(&cnf.ConfigPath, "config", cnf.ConfigPath, "path to file with config")
+	f.IntVar(&cnf.StoreInterval, "i", cnf.StoreInterval, "store interval")
+	f.BoolVar(&cnf.Restore, "r", cnf.Restore, "need restore")
 	if err := f.Parse(params); err != nil {
 		return fmt.Errorf("InitFlags: parse flags fail: %w", err)
 	}
@@ -63,6 +83,33 @@ func (cnf *Config) initFlags(params []string) error {
 func (cnf *Config) initEnvs() error {
 	if err := env.Parse(cnf); err != nil {
 		return fmt.Errorf("InitEnvs: parse envs fail: %w", err)
+	}
+
+	return nil
+}
+
+func (cnf *Config) initConfig(params []string) error {
+	configPath := os.Getenv("CONFIG")
+	if configPath == "" {
+		if err := cnf.initFlags(params); err != nil {
+			return fmt.Errorf("findConfig: initFlags fail: %w", err)
+		}
+
+		configPath = cnf.ConfigPath
+	}
+
+	if configPath == "" {
+		return nil
+	}
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return fmt.Errorf("findConfig: read config file fail: %w", err)
+	}
+
+	err = json.Unmarshal(data, &cnf)
+	if err != nil {
+		return fmt.Errorf("findConfig: json unmarshal fail: %w", err)
 	}
 
 	return nil

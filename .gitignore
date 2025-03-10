@@ -29,6 +29,8 @@ vendor/
 *.env
 *.pem
 storage.json
+server-config.json
+agent-config.json
 golangci-lint
 q.md
 test.html

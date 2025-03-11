@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
@@ -35,7 +36,7 @@ type Storage interface {
 }
 
 type Sender interface {
-	DoRequest(url string, headers map[string]string, body any) error
+	DoRequest(ctx context.Context, url string, headers map[string]string, body any) error
 }
 
 type Report struct {
@@ -72,10 +73,10 @@ func NewReport(s Storage, host string, secretKey string, cryptoKey string, sende
 	}
 }
 
-func (r *Report) Send(metrics []model.Metric) {
+func (r *Report) Send(ctx context.Context, metrics []model.Metric) {
 	const rCount = 3
 	action := func() error {
-		return r.request(metrics, r.massUpdateURL)
+		return r.request(ctx, metrics, r.massUpdateURL)
 	}
 	if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
 		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
@@ -141,7 +142,7 @@ func (r *Report) ClearCounter() {
 	r.Storage.ClearCounter()
 }
 
-func (r *Report) request(data any, url string) error {
+func (r *Report) request(ctx context.Context, data any, url string) error {
 	headers := map[string]string{
 		"Content-Type":     "application/json",
 		"Content-Encoding": "gzip",
@@ -175,7 +176,7 @@ func (r *Report) request(data any, url string) error {
 		return r.requestError(err)
 	}
 
-	if err := r.sender.DoRequest(r.host+url, headers, body); err != nil {
+	if err := r.sender.DoRequest(ctx, r.host+url, headers, body); err != nil {
 		return r.requestError(err)
 	}
 

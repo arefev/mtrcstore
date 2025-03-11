@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/arefev/mtrcstore/internal/agent"
 	"github.com/arefev/mtrcstore/internal/agent/repository"
@@ -27,6 +29,8 @@ func main() {
 
 func run(ctx context.Context, args []string, sender service.Sender) error {
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
 	config, err := NewConfig(args)
 	if err != nil {

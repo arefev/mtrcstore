@@ -11,6 +11,13 @@ import (
 	"os"
 )
 
+const (
+	bits           int         = 4096
+	filePermission fs.FileMode = 0o644
+	privateKeyName string      = "private.pem"
+	publicKeyName  string      = "public.pem"
+)
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -18,9 +25,6 @@ func main() {
 }
 
 func run() error {
-	const bits = 4096
-	const filePermission fs.FileMode = 0o644
-
 	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return fmt.Errorf("key generator run - GenerateKey failed: %w", err)
@@ -33,7 +37,7 @@ func run() error {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	})
-	err = os.WriteFile("private.pem", privateKeyPEM, filePermission)
+	err = os.WriteFile(privateKeyName, privateKeyPEM, filePermission)
 	if err != nil {
 		return fmt.Errorf("key generator run - WriteFile with private key failed: %w", err)
 	}
@@ -46,7 +50,7 @@ func run() error {
 		Type:  "RSA PUBLIC KEY",
 		Bytes: publicKeyBytes,
 	})
-	err = os.WriteFile("public.pem", publicKeyPEM, filePermission)
+	err = os.WriteFile(publicKeyName, publicKeyPEM, filePermission)
 	if err != nil {
 		return fmt.Errorf("key generator run - WriteFile with public key failed: %w", err)
 	}

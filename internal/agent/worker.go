@@ -25,7 +25,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	readTime := time.NewTicker(time.Duration(w.PollInterval) * time.Second).C
 	sendTime := time.NewTicker(time.Duration(w.ReportInterval) * time.Second).C
 
-	w.WorkerPool.Run()
+	w.WorkerPool.Run(ctx)
 
 	for {
 		select {

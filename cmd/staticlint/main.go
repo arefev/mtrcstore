@@ -34,6 +34,12 @@ var OSExitCheckAnalyzer = &analysis.Analyzer{
 }
 
 func main() {
+	multichecker.Main(
+		checkers()...,
+	)
+}
+
+func checkers() []*analysis.Analyzer {
 	checks := make([]*analysis.Analyzer, 0)
 	for _, v := range staticcheck.Analyzers {
 		checks = append(checks, v.Analyzer)
@@ -66,9 +72,7 @@ func main() {
 		OSExitCheckAnalyzer,
 	)
 
-	multichecker.Main(
-		checks...,
-	)
+	return checks
 }
 
 func RunOSExitCheckAnalyzer(pass *analysis.Pass) (any, error) {

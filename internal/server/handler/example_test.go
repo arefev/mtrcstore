@@ -20,7 +20,7 @@ func ExampleMetricHandlers_Update() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -46,7 +46,7 @@ func ExampleMetricHandlers_Find() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -83,7 +83,7 @@ func ExampleMetricHandlers_UpdateJSON() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -117,7 +117,7 @@ func ExampleMetricHandlers_FindJSON() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -161,7 +161,7 @@ func ExampleMetricHandlers_Get() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -187,7 +187,7 @@ func ExampleMetricHandlers_Ping() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 
@@ -213,7 +213,7 @@ func ExampleMetricHandlers_Updates() {
 	}
 	metricHandlers := handler.NewMetricHandlers(repository.NewMemory(), cLog)
 
-	r := server.InitRouter(metricHandlers, cLog, "")
+	r := server.InitRouter(metricHandlers, cLog, "", "")
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 

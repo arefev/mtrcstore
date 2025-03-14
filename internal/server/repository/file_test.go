@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 func TestFileSave(t *testing.T) {
 	t.Run("file save success", func(t *testing.T) {
+		ctx := context.Background()
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
 
@@ -25,7 +27,7 @@ func TestFileSave(t *testing.T) {
 		}
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
-		err = rep.Save(mtrc)
+		err = rep.Save(ctx, mtrc)
 		require.NoError(t, err)
 
 		saved, err := rep.findCounter("PollCounter")
@@ -36,6 +38,7 @@ func TestFileSave(t *testing.T) {
 
 func TestFileWrite(t *testing.T) {
 	t.Run("file write success", func(t *testing.T) {
+		ctx := context.Background()
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
 
@@ -47,7 +50,7 @@ func TestFileWrite(t *testing.T) {
 		}
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
-		err = rep.Save(mtrc)
+		err = rep.Save(ctx, mtrc)
 		require.NoError(t, err)
 
 		rep.write()
@@ -64,6 +67,7 @@ func TestFileWrite(t *testing.T) {
 
 func TestFileWorker(t *testing.T) {
 	t.Run("file worker success", func(t *testing.T) {
+		ctx := context.Background()
 		const filePermission fs.FileMode = 0o644
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
@@ -77,7 +81,7 @@ func TestFileWorker(t *testing.T) {
 
 		rep := NewFile(1, "./storage_test.json", false, cLog)
 		rep.WorkerRun()
-		err = rep.Save(mtrc)
+		err = rep.Save(ctx, mtrc)
 		require.NoError(t, err)
 
 		time.Sleep(time.Second * 3)
@@ -96,6 +100,7 @@ func TestFileWorker(t *testing.T) {
 
 func TestFileEvent(t *testing.T) {
 	t.Run("file event success", func(t *testing.T) {
+		ctx := context.Background()
 		const filePermission fs.FileMode = 0o644
 		cLog, err := logger.Build("debug")
 		require.NoError(t, err)
@@ -108,7 +113,7 @@ func TestFileEvent(t *testing.T) {
 		}
 
 		rep := NewFile(0, "./storage_test.json", false, cLog)
-		err = rep.Save(mtrc)
+		err = rep.Save(ctx, mtrc)
 		require.NoError(t, err)
 
 		file, err := os.OpenFile("./storage_test.json", os.O_RDONLY|os.O_CREATE, filePermission)

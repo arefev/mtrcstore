@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"runtime"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 func TestWorkerPoolRunSuccess(t *testing.T) {
 	t.Run("worker pool run success", func(t *testing.T) {
+		ctx := context.Background()
 		var memStats runtime.MemStats
 
 		ctrl := gomock.NewController(t)
@@ -21,9 +23,9 @@ func TestWorkerPoolRunSuccess(t *testing.T) {
 
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
-		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
+		client.EXPECT().DoRequest(gomock.Any(), "http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
 
-		report := service.NewReport(&storage, "localhost:8080", "", client)
+		report := service.NewReport(&storage, "localhost:8080", "", "", client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)
@@ -37,7 +39,7 @@ func TestWorkerPoolRunSuccess(t *testing.T) {
 		require.Equal(t, 1, int(counter["PollCount"]))
 
 		pool := service.NewWorkerPool(report, 3)
-		pool.Run()
+		pool.Run(ctx)
 		pool.Send()
 		time.Sleep(time.Second * 2)
 

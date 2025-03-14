@@ -80,7 +80,7 @@ func (h *MetricHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		metric.Value = &mValue
 	}
 
-	if err := h.Storage.Save(metric); err != nil {
+	if err := h.Storage.Save(r.Context(), metric); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -113,7 +113,7 @@ func (h *MetricHandlers) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err := h.Storage.Find(r.PathValue("name"), mType)
+	metric, err := h.Storage.Find(r.Context(), r.PathValue("name"), mType)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -162,7 +162,7 @@ func (h *MetricHandlers) UpdateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Storage.Save(metric); err != nil {
+	if err := h.Storage.Save(r.Context(), metric); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -204,7 +204,7 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := h.Storage.Find(metric.ID, metric.MType)
+	value, err := h.Storage.Find(r.Context(), metric.ID, metric.MType)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -230,7 +230,7 @@ func (h *MetricHandlers) FindJSON(w http.ResponseWriter, r *http.Request) {
 //	@Router		/ [get]
 func (h *MetricHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := service.ListHTML(w, h.Storage.Get()); err != nil {
+	if err := service.ListHTML(w, h.Storage.Get(r.Context())); err != nil {
 		h.log.Error("handler Get failed", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -261,7 +261,7 @@ func (h *MetricHandlers) checkType(t string) error {
 //	@Failure	500
 //	@Router		/ping [get]
 func (h *MetricHandlers) Ping(w http.ResponseWriter, r *http.Request) {
-	if err := h.Storage.Ping(); err != nil {
+	if err := h.Storage.Ping(r.Context()); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -294,7 +294,7 @@ func (h *MetricHandlers) Updates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Storage.MassSave(metrics); err != nil {
+	if err := h.Storage.MassSave(r.Context(), metrics); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

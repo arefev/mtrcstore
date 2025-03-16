@@ -13,8 +13,8 @@ func InitRouter(h *handler.MetricHandlers, log *zap.Logger, secretKey string, cr
 	m := middleware.NewMiddleware(log, secretKey, cryptoKey)
 	r := chi.NewRouter()
 	r.Use(m.Logger)
-	r.Use(m.Compress)
 	r.Use(m.Decrypt)
+	r.Use(m.Compress)
 	r.Use(m.CheckSign)
 	r.Mount("/debug", chi_middleware.Profiler())
 

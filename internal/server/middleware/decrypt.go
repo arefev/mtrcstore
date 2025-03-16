@@ -31,7 +31,7 @@ func (m *Middleware) Decrypt(next http.Handler) http.Handler {
 		body, err = decrypt(body, m.cryptoKey)
 		if err != nil {
 			m.log.Error("middleware Decrypt: decrypt failed", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 

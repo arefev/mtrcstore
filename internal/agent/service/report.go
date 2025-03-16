@@ -14,6 +14,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -162,6 +163,16 @@ func (r *Report) request(ctx context.Context, data any, url string) error {
 		headers["HashSHA256"] = hex.EncodeToString(hash)
 	}
 
+	body, err := r.compress(jsonBody)
+	if err != nil {
+		return r.requestError(err)
+	}
+
+	jsonBody, err = io.ReadAll(body)
+	if err != nil {
+		return r.requestError(err)
+	}
+
 	if r.cryptoKey != "" {
 		ecrypted, err := r.encrypt(jsonBody, r.cryptoKey)
 		if err != nil {
@@ -171,12 +182,7 @@ func (r *Report) request(ctx context.Context, data any, url string) error {
 		jsonBody = ecrypted
 	}
 
-	body, err := r.compress(jsonBody)
-	if err != nil {
-		return r.requestError(err)
-	}
-
-	if err := r.sender.DoRequest(ctx, r.host+url, headers, body); err != nil {
+	if err := r.sender.DoRequest(ctx, r.host+url, headers, jsonBody); err != nil {
 		return r.requestError(err)
 	}
 

@@ -5,6 +5,7 @@
 package mock_service
 
 import (
+	context "context"
 	reflect "reflect"
 	runtime "runtime"
 
@@ -139,15 +140,15 @@ func (m *MockSender) EXPECT() *MockSenderMockRecorder {
 }
 
 // DoRequest mocks base method.
-func (m *MockSender) DoRequest(url string, headers map[string]string, body any) error {
+func (m *MockSender) DoRequest(ctx context.Context, url string, headers map[string]string, body any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DoRequest", url, headers, body)
+	ret := m.ctrl.Call(m, "DoRequest", ctx, url, headers, body)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DoRequest indicates an expected call of DoRequest.
-func (mr *MockSenderMockRecorder) DoRequest(url, headers, body interface{}) *gomock.Call {
+func (mr *MockSenderMockRecorder) DoRequest(ctx, url, headers, body interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoRequest", reflect.TypeOf((*MockSender)(nil).DoRequest), url, headers, body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoRequest", reflect.TypeOf((*MockSender)(nil).DoRequest), ctx, url, headers, body)
 }

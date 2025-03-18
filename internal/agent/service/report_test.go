@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"runtime"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestGetGaugesSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", client)
+		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)
@@ -40,7 +41,7 @@ func TestGetCountersSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", client)
+		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
 
 		report.IncrementCounter()
 
@@ -57,7 +58,7 @@ func TestSaveCPUSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", client)
+		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
 
 		err := report.SaveCPU()
 		require.NoError(t, err)
@@ -69,6 +70,7 @@ func TestSaveCPUSuccess(t *testing.T) {
 
 func TestSendSuccess(t *testing.T) {
 	t.Run("send success", func(t *testing.T) {
+		ctx := context.Background()
 		var memStats runtime.MemStats
 
 		ctrl := gomock.NewController(t)
@@ -77,9 +79,9 @@ func TestSendSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 
 		client := mock_service.NewMockSender(ctrl)
-		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any())
+		client.EXPECT().DoRequest(gomock.Any(), "http://localhost:8080/updates/", gomock.Any(), gomock.Any())
 
-		report := service.NewReport(&storage, "localhost:8080", "test", client)
+		report := service.NewReport(&storage, "localhost:8080", "test", "", client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)
@@ -93,6 +95,6 @@ func TestSendSuccess(t *testing.T) {
 		mtrs := report.GetMetrics()
 		require.NotEmpty(t, mtrs)
 
-		report.Send(mtrs)
+		report.Send(ctx, mtrs)
 	})
 }

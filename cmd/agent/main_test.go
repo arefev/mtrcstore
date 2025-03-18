@@ -32,7 +32,7 @@ func TestRunSuccess(t *testing.T) {
 		defer ctrl.Finish()
 
 		client := mock_service.NewMockSender(ctrl)
-		client.EXPECT().DoRequest("http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
+		client.EXPECT().DoRequest(gomock.Any(), "http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
 
 		args := []string{
 			"-p=1",

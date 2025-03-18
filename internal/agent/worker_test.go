@@ -41,7 +41,7 @@ func TestWorker_read(t *testing.T) {
 			storage := repository.NewMemory()
 
 			client := service.Client{}
-			report := service.NewReport(&storage, serverHost, "", &client)
+			report := service.NewReport(&storage, serverHost, "", "", &client)
 
 			wp := service.NewWorkerPool(report, tt.fields.RateLimit)
 

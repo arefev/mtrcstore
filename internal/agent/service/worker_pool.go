@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/arefev/mtrcstore/internal/agent/model"
 )
 
@@ -17,17 +19,17 @@ func NewWorkerPool(report *Report, rateLimit int) *WorkerPool {
 	}
 }
 
-func (wp *WorkerPool) Run() {
+func (wp *WorkerPool) Run(ctx context.Context) {
 	wp.jobChan = make(chan []model.Metric, wp.rateLimit)
 
 	for range wp.rateLimit {
-		go wp.worker()
+		go wp.worker(ctx)
 	}
 }
 
-func (wp *WorkerPool) worker() {
+func (wp *WorkerPool) worker(ctx context.Context) {
 	for metrics := range wp.jobChan {
-		wp.Report.Send(metrics)
+		wp.Report.Send(ctx, metrics)
 	}
 }
 

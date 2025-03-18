@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
@@ -25,6 +27,7 @@ var (
 
 func main() {
 	ctx := context.Background()
+
 	if err := run(ctx, os.Args[1:]); err != nil {
 		log.Fatal(err)
 	}
@@ -32,9 +35,10 @@ func main() {
 
 func run(ctx context.Context, args []string) error {
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
 	config, err := NewConfig(args)
-
 	if err != nil {
 		return fmt.Errorf("main config init failed: %w", err)
 	}
@@ -58,7 +62,7 @@ func run(ctx context.Context, args []string) error {
 	}()
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
-	r := server.InitRouter(metricHandlers, cLog, config.SecretKey)
+	r := server.InitRouter(metricHandlers, cLog, config.SecretKey, config.CryptoKey)
 
 	g, gCtx := errgroup.WithContext(ctx)
 	serv := http.Server{

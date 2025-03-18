@@ -3,14 +3,21 @@ package service
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
@@ -30,7 +37,7 @@ type Storage interface {
 }
 
 type Sender interface {
-	DoRequest(url string, headers map[string]string, body any) error
+	DoRequest(ctx context.Context, url string, headers map[string]string, body any) error
 }
 
 type Report struct {
@@ -42,9 +49,10 @@ type Report struct {
 	counterName   string
 	secretKey     string
 	host          string
+	cryptoKey     string
 }
 
-func NewReport(s Storage, host string, secretKey string, sender Sender) *Report {
+func NewReport(s Storage, host string, secretKey string, cryptoKey string, sender Sender) *Report {
 	const (
 		protocol          = "http://"
 		updateURLPath     = "/update"
@@ -60,15 +68,16 @@ func NewReport(s Storage, host string, secretKey string, sender Sender) *Report 
 		gaugeName:     gaugeName,
 		counterName:   counterName,
 		secretKey:     secretKey,
+		cryptoKey:     cryptoKey,
 		sender:        sender,
 		host:          protocol + host,
 	}
 }
 
-func (r *Report) Send(metrics []model.Metric) {
+func (r *Report) Send(ctx context.Context, metrics []model.Metric) {
 	const rCount = 3
 	action := func() error {
-		return r.request(metrics, r.massUpdateURL)
+		return r.request(ctx, metrics, r.massUpdateURL)
 	}
 	if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
 		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
@@ -134,7 +143,7 @@ func (r *Report) ClearCounter() {
 	r.Storage.ClearCounter()
 }
 
-func (r *Report) request(data any, url string) error {
+func (r *Report) request(ctx context.Context, data any, url string) error {
 	headers := map[string]string{
 		"Content-Type":     "application/json",
 		"Content-Encoding": "gzip",
@@ -159,7 +168,21 @@ func (r *Report) request(data any, url string) error {
 		return r.requestError(err)
 	}
 
-	if err := r.sender.DoRequest(r.host+url, headers, body); err != nil {
+	jsonBody, err = io.ReadAll(body)
+	if err != nil {
+		return r.requestError(err)
+	}
+
+	if r.cryptoKey != "" {
+		ecrypted, err := r.encrypt(jsonBody, r.cryptoKey)
+		if err != nil {
+			return r.requestError(err)
+		}
+
+		jsonBody = ecrypted
+	}
+
+	if err := r.sender.DoRequest(ctx, r.host+url, headers, jsonBody); err != nil {
 		return r.requestError(err)
 	}
 
@@ -168,6 +191,42 @@ func (r *Report) request(data any, url string) error {
 
 func (r *Report) requestError(err error) error {
 	return fmt.Errorf("request failed: %w", err)
+}
+
+func (r *Report) encrypt(data []byte, cryptoKey string) ([]byte, error) {
+	const decreaseKeySize int = 11
+
+	publicKeyPEM, err := os.ReadFile(cryptoKey)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt - ReadFile failed: %w", err)
+	}
+
+	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+	parsed, err := x509.ParsePKIXPublicKey(publicKeyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt - Decode failed: %w", err)
+	}
+
+	publicKey, ok := parsed.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("encrypt - invalid public key type")
+	}
+
+	msgLen := len(data)
+	step := publicKey.Size() - decreaseKeySize
+	var encryptedBytes []byte
+
+	for start := 0; start < msgLen; start += step {
+		finish := min(start+step, msgLen)
+		encryptedBlockBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, data[start:finish])
+		if err != nil {
+			return nil, fmt.Errorf("encrypt - EncryptPKCS1v15 failed: %w", err)
+		}
+
+		encryptedBytes = append(encryptedBytes, encryptedBlockBytes...)
+	}
+
+	return encryptedBytes, nil
 }
 
 func (r *Report) sign(data []byte) ([]byte, error) {

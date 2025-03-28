@@ -163,6 +163,12 @@ func (r *Report) request(ctx context.Context, data any, url string) error {
 		headers["HashSHA256"] = hex.EncodeToString(hash)
 	}
 
+	ip, err := r.getIP()
+	if err != nil {
+		return r.requestError(err)
+	}
+	headers["X-Real-IP"] = ip
+
 	body, err := r.compress(jsonBody)
 	if err != nil {
 		return r.requestError(err)
@@ -187,6 +193,32 @@ func (r *Report) request(ctx context.Context, data any, url string) error {
 	}
 
 	return nil
+}
+
+func (r *Report) getIP() (string, error) {
+	var ip net.IP
+	a, _ := net.Interfaces()
+	for _, i := range a {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return "", fmt.Errorf("getIP addrs failed: %w", err)
+		}
+
+		for _, addr := range addrs {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+		}
+	}
+
+	if ip == nil {
+		return "", errors.New("getIP failed: no IP address found")
+	}
+
+	return ip.String(), nil
 }
 
 func (r *Report) requestError(err error) error {

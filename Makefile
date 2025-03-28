@@ -18,7 +18,7 @@ build: server-build agent-build
 server: server-run
 
 server-run: server-build
-	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081" -crypto-key="./private.pem"
+	./cmd/server/server -d=${DATABASE_DSN} -k="${SECRET_KEY}" -a="localhost:8081" -crypto-key="./private.pem" -t="fe81::215:5dff:fecb:812c/64"
 
 server-build:
 	go build -ldflags "-X main.buildVersion=v1.0.1 -X main.buildCommit='test' -X 'main.buildDate=$(shell date +'%Y/%m/%d %H:%M:%S')'" -o ./cmd/server/server ./cmd/server/

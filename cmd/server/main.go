@@ -62,7 +62,7 @@ func run(ctx context.Context, args []string) error {
 	}()
 
 	metricHandlers := handler.NewMetricHandlers(storage, cLog)
-	r := server.InitRouter(metricHandlers, cLog, config.SecretKey, config.CryptoKey)
+	r := server.InitRouter(metricHandlers, cLog, config.TrustedSubnet, config.SecretKey, config.CryptoKey)
 
 	g, gCtx := errgroup.WithContext(ctx)
 	serv := http.Server{

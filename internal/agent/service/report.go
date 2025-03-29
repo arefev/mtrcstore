@@ -21,7 +21,10 @@ import (
 	"runtime"
 
 	"github.com/arefev/mtrcstore/internal/agent/model"
-	"github.com/arefev/mtrcstore/internal/retry"
+	"github.com/arefev/mtrcstore/internal/proto"
+	// "github.com/arefev/mtrcstore/internal/retry"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Gauge float64
@@ -75,13 +78,49 @@ func NewReport(s Storage, host string, secretKey string, cryptoKey string, sende
 }
 
 func (r *Report) Send(ctx context.Context, metrics []model.Metric) {
-	const rCount = 3
-	action := func() error {
-		return r.request(ctx, metrics, r.massUpdateURL)
+	conn, err := grpc.NewClient(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
 	}
-	if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
-		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
+	defer conn.Close()
+	c := proto.NewMetricsClient(conn)
+
+	var pMetrics []*proto.Metric
+	for _, m := range metrics {
+		pm := &proto.Metric{
+			ID:   m.ID,
+			Type: m.MType,
+		}
+
+		if m.Value != nil {
+			pm.Value = *m.Value
+		}
+
+		if m.Delta != nil {
+			pm.Delta = *m.Delta
+		}
+
+		pMetrics = append(pMetrics, pm)
 	}
+
+	response, err := c.UpdateMetric(context.Background(), &proto.UpdateMetricRequest{
+		Metrics: pMetrics,
+	})
+
+	if err != nil {
+		log.Printf("send(): failed to send the metrics: %s", err.Error())
+		return
+	}
+
+	log.Printf("response: %+v", response)
+
+	// const rCount = 3
+	// action := func() error {
+	// 	return r.request(ctx, metrics, r.massUpdateURL)
+	// }
+	// if err := retry.New(action, r.isConnRefused, rCount).Run(); err != nil {
+	// 	log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
+	// }
 }
 
 func (r *Report) GetMetrics() []model.Metric {

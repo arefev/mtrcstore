@@ -14,8 +14,8 @@ import (
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
-	"github.com/arefev/mtrcstore/internal/server/model"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"github.com/arefev/mtrcstore/internal/server/service"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
@@ -34,28 +34,6 @@ func main() {
 	if err := run(ctx, os.Args[1:]); err != nil {
 		log.Fatal(err)
 	}
-}
-
-type MetricServer struct {
-	proto.UnimplementedMetricsServer
-	storage repository.Storage
-}
-
-func (ms *MetricServer) UpdateMetric(ctx context.Context, in *proto.UpdateMetricRequest) (*proto.UpdateMetricResponse, error) {
-	var metrics []model.Metric
-	for _, m := range in.Metrics {
-		metrics = append(metrics, model.Metric{
-			MType: m.Type,
-			ID:    m.ID,
-			Value: &m.Value,
-			Delta: &m.Delta,
-		})
-	}
-
-	log.Printf("metrics %+v", metrics)
-
-	ms.storage.MassSave(ctx, metrics)
-	return nil, nil
 }
 
 func run(ctx context.Context, args []string) error {
@@ -99,8 +77,8 @@ func runGRPC(ctx context.Context, storage *repository.Storage, c Config, l *zap.
 	}
 
 	s := grpc.NewServer()
-	proto.RegisterMetricsServer(s, &MetricServer{
-		storage: *storage,
+	proto.RegisterMetricsServer(s, &service.GRPCServer{
+		Storage: *storage,
 	})
 
 	go func() {

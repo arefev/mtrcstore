@@ -41,6 +41,6 @@ func TestRunSuccess(t *testing.T) {
 		config, err := NewConfig(args)
 		require.NoError(t, err)
 
-		require.ErrorIs(t, run(ctx, config, client), agent.ErrWorkerCanceled)
+		require.ErrorIs(t, run(ctx, &config, client), agent.ErrWorkerCanceled)
 	})
 }

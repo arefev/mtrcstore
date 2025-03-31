@@ -14,14 +14,19 @@ type GRPCServer struct {
 	Storage repository.Storage
 }
 
-func (gs *GRPCServer) UpdateMetric(ctx context.Context, in *proto.UpdateMetricRequest) (*proto.UpdateMetricResponse, error) {
-	var metrics []model.Metric
-	for _, m := range in.Metrics {
+func (gs *GRPCServer) UpdateMetric(
+	ctx context.Context,
+	in *proto.UpdateMetricRequest,
+) (*proto.UpdateMetricResponse, error) {
+	metrics := make([]model.Metric, 0, len(in.GetMetrics()))
+	for _, m := range in.GetMetrics() {
+		value := m.GetValue()
+		delta := m.GetDelta()
 		metrics = append(metrics, model.Metric{
-			MType: m.Type,
-			ID:    m.ID,
-			Value: &m.Value,
-			Delta: &m.Delta,
+			MType: m.GetType(),
+			ID:    m.GetID(),
+			Value: &value,
+			Delta: &delta,
 		})
 	}
 

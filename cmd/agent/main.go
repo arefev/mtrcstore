@@ -38,12 +38,12 @@ func main() {
 		)
 	}
 
-	if err := run(ctx, config, client); err != nil {
+	if err := run(ctx, &config, client); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(ctx context.Context, config Config, sender service.Sender) error {
+func run(ctx context.Context, config *Config, sender service.Sender) error {
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer stop()

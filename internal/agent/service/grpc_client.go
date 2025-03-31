@@ -28,7 +28,7 @@ func (gc *grpcClient) Request(ctx context.Context, data []model.Metric) error {
 		return fmt.Errorf("grpc request NewClient failed: %w", err)
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
+		if err = conn.Close(); err != nil {
 			log.Printf("grpc request conn close failed: %s", err.Error())
 		}
 	}()

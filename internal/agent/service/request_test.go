@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/arefev/mtrcstore/internal/agent/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,8 +15,8 @@ func TestDoRequestSuccess(t *testing.T) {
 		s := httptest.NewServer(nil)
 		defer s.Close()
 
-		client := Client{}
-		err := client.DoRequest(ctx, s.URL, map[string]string{"Content-type": "application/json"}, nil)
+		client := NewClient("", "", s.URL)
+		err := client.Request(ctx, []model.Metric{})
 		require.NoError(t, err)
 	})
 }
@@ -23,8 +24,8 @@ func TestDoRequestSuccess(t *testing.T) {
 func TestDoRequestFail(t *testing.T) {
 	t.Run("do request success", func(t *testing.T) {
 		ctx := context.Background()
-		client := Client{}
-		err := client.DoRequest(ctx, "http://fail.lo", map[string]string{}, nil)
+		client := NewClient("", "", "http://fail.lo")
+		err := client.Request(ctx, []model.Metric{})
 		require.ErrorIs(t, err, ErrRequestFail)
 	})
 }

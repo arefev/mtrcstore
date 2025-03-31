@@ -54,7 +54,7 @@ func (r *Report) Send(ctx context.Context, metrics []model.Metric) {
 		return r.sender.Request(ctx, metrics)
 	}
 	if err := retry.New(action, r.sender.IsConnRefused, rCount).Run(); err != nil {
-		log.Printf("sendCounters(): failed to send the counter metric %s: %s", r.counterName, err.Error())
+		log.Printf("report failed to send the metrics: %s", err.Error())
 	}
 }
 

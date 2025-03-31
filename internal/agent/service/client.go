@@ -56,7 +56,7 @@ func (c *client) Request(ctx context.Context, data []model.Metric) error {
 		"Content-Type":     "application/json",
 		"Content-Encoding": "gzip",
 	}
-	
+
 	jsonBody, mErr := json.Marshal(data)
 	if mErr != nil {
 		return c.requestError(mErr)

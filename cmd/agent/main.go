@@ -26,12 +26,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// client := service.NewClient(
-	// 	config.SecretKey,
-	// 	config.CryptoKey,
-	// 	"http://" + config.Address + "/updates/",
-	// )
-	client := service.NewGRPCClient(":3300")
+	var client service.Sender
+	switch {
+	case config.GRPCAddress != "":
+		client = service.NewGRPCClient(config.GRPCAddress)
+	default:
+		client = service.NewClient(
+			config.SecretKey,
+			config.CryptoKey,
+			"http://"+config.Address+"/updates/",
+		)
+	}
+
 	if err := run(ctx, config, client); err != nil {
 		log.Fatal(err)
 	}

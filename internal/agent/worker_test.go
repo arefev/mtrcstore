@@ -40,8 +40,8 @@ func TestWorker_read(t *testing.T) {
 			serverHost := "http://localhost:8080"
 			storage := repository.NewMemory()
 
-			client := service.Client{}
-			report := service.NewReport(&storage, serverHost, "", "", &client)
+			client := service.NewClient("", "", serverHost)
+			report := service.NewReport(&storage, client)
 
 			wp := service.NewWorkerPool(report, tt.fields.RateLimit)
 

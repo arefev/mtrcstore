@@ -22,7 +22,7 @@ func TestGetGaugesSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
+		report := service.NewReport(&storage, client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)
@@ -41,7 +41,7 @@ func TestGetCountersSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
+		report := service.NewReport(&storage, client)
 
 		report.IncrementCounter()
 
@@ -58,7 +58,7 @@ func TestSaveCPUSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 		client := mock_service.NewMockSender(ctrl)
 
-		report := service.NewReport(&storage, "http://localhost:8080", "", "", client)
+		report := service.NewReport(&storage, client)
 
 		err := report.SaveCPU()
 		require.NoError(t, err)
@@ -79,9 +79,9 @@ func TestSendSuccess(t *testing.T) {
 		storage := repository.NewMemory()
 
 		client := mock_service.NewMockSender(ctrl)
-		client.EXPECT().DoRequest(gomock.Any(), "http://localhost:8080/updates/", gomock.Any(), gomock.Any())
+		client.EXPECT().Request(gomock.Any(), gomock.Any())
 
-		report := service.NewReport(&storage, "localhost:8080", "test", "", client)
+		report := service.NewReport(&storage, client)
 
 		runtime.ReadMemStats(&memStats)
 		err := report.Save(&memStats)

@@ -14,6 +14,7 @@ const (
 	secretKey      = ""
 	cryptoKey      = ""
 	configPath     = ""
+	grpcAddress    = ""
 	pollInterval   = 2
 	reportInterval = 10
 	rateLimit      = 3
@@ -24,6 +25,7 @@ type Config struct {
 	SecretKey      string `env:"KEY" json:"secret_key"`
 	CryptoKey      string `env:"CRYPTO_KEY" json:"crypto_key"`
 	ConfigPath     string `env:"CONFIG" json:"-"`
+	GRPCAddress    string `env:"GRPC_ADDRESSS" json:"grpc_address"`
 	PollInterval   int    `env:"POLL_INTERVAL" json:"poll_interval"`
 	ReportInterval int    `env:"REPORT_INTERVAL" json:"report_interval"`
 	RateLimit      int    `env:"RATE_LIMIT" json:"rate_limit"`
@@ -37,6 +39,7 @@ func NewConfig(params []string) (Config, error) {
 		PollInterval:   pollInterval,
 		ReportInterval: reportInterval,
 		RateLimit:      rateLimit,
+		GRPCAddress:    grpcAddress,
 	}
 
 	if err := cnf.initConfig(params); err != nil {
@@ -61,6 +64,7 @@ func (cnf *Config) initFlags(params []string) error {
 	f.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to file with public key")
 	f.StringVar(&cnf.ConfigPath, "c", cnf.ConfigPath, "path to file with config")
 	f.StringVar(&cnf.ConfigPath, "config", cnf.ConfigPath, "path to file with config")
+	f.StringVar(&cnf.GRPCAddress, "grpc-addr", cnf.GRPCAddress, "GRPC address")
 	f.IntVar(&cnf.PollInterval, "p", cnf.PollInterval, "poll interval")
 	f.IntVar(&cnf.ReportInterval, "r", cnf.ReportInterval, "report interval")
 	f.IntVar(&cnf.RateLimit, "l", cnf.RateLimit, "rate limit")

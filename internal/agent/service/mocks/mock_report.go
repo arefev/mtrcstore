@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 	runtime "runtime"
 
+	model "github.com/arefev/mtrcstore/internal/agent/model"
 	service "github.com/arefev/mtrcstore/internal/agent/service"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -139,16 +140,30 @@ func (m *MockSender) EXPECT() *MockSenderMockRecorder {
 	return m.recorder
 }
 
-// DoRequest mocks base method.
-func (m *MockSender) DoRequest(ctx context.Context, url string, headers map[string]string, body any) error {
+// IsConnRefused mocks base method.
+func (m *MockSender) IsConnRefused(err error) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DoRequest", ctx, url, headers, body)
+	ret := m.ctrl.Call(m, "IsConnRefused", err)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsConnRefused indicates an expected call of IsConnRefused.
+func (mr *MockSenderMockRecorder) IsConnRefused(err interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConnRefused", reflect.TypeOf((*MockSender)(nil).IsConnRefused), err)
+}
+
+// Request mocks base method.
+func (m *MockSender) Request(ctx context.Context, data []model.Metric) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Request", ctx, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DoRequest indicates an expected call of DoRequest.
-func (mr *MockSenderMockRecorder) DoRequest(ctx, url, headers, body interface{}) *gomock.Call {
+// Request indicates an expected call of Request.
+func (mr *MockSenderMockRecorder) Request(ctx, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoRequest", reflect.TypeOf((*MockSender)(nil).DoRequest), ctx, url, headers, body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockSender)(nil).Request), ctx, data)
 }

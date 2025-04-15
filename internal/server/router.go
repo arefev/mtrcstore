@@ -9,9 +9,10 @@ import (
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
 )
 
-func InitRouter(h *handler.MetricHandlers, log *zap.Logger, secretKey string, cryptoKey string) *chi.Mux {
-	m := middleware.NewMiddleware(log, secretKey, cryptoKey)
+func InitRouter(h *handler.MetricHandlers, log *zap.Logger, cidr string, secretKey string, cryptoKey string) *chi.Mux {
+	m := middleware.NewMiddleware(log, cidr, secretKey, cryptoKey)
 	r := chi.NewRouter()
+	r.Use(m.IsPrivateIP)
 	r.Use(m.Logger)
 	r.Use(m.Decrypt)
 	r.Use(m.Compress)

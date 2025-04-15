@@ -17,6 +17,8 @@ const (
 	secretKey       string = ""
 	cryptoKey       string = ""
 	configPath      string = ""
+	trustedSubnet   string = ""
+	grpcAddress     string = ""
 	storeInterval   int    = 300
 	restore         bool   = true
 )
@@ -29,6 +31,8 @@ type Config struct {
 	SecretKey       string `env:"KEY" json:"secret_key"`
 	CryptoKey       string `env:"CRYPTO_KEY" json:"crypto_key"`
 	ConfigPath      string `env:"CONFIG" json:"-"`
+	TrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
+	GRPCAddress     string `env:"GRPC_ADDRESSS" json:"grpc_address"`
 	StoreInterval   int    `env:"STORE_INTERVAL" json:"store_interval"`
 	Restore         bool   `env:"RESTORE" json:"restore"`
 }
@@ -44,6 +48,8 @@ func NewConfig(params []string) (Config, error) {
 		ConfigPath:      configPath,
 		StoreInterval:   storeInterval,
 		Restore:         restore,
+		TrustedSubnet:   trustedSubnet,
+		GRPCAddress:     grpcAddress,
 	}
 
 	if err := cnf.initConfig(params); err != nil {
@@ -71,6 +77,8 @@ func (cnf *Config) initFlags(params []string) error {
 	f.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to file with private key")
 	f.StringVar(&cnf.ConfigPath, "c", cnf.ConfigPath, "path to file with config")
 	f.StringVar(&cnf.ConfigPath, "config", cnf.ConfigPath, "path to file with config")
+	f.StringVar(&cnf.TrustedSubnet, "t", cnf.TrustedSubnet, "CIDR")
+	f.StringVar(&cnf.GRPCAddress, "grpc-addr", cnf.GRPCAddress, "GRPC address")
 	f.IntVar(&cnf.StoreInterval, "i", cnf.StoreInterval, "store interval")
 	f.BoolVar(&cnf.Restore, "r", cnf.Restore, "need restore")
 	if err := f.Parse(params); err != nil {

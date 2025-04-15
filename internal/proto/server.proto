@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package mtrcstore;
+
+option go_package = "mtrcstore/proto";
+
+message Metric {
+  int64 Delta = 1;  // значение метрики counter
+  double Value = 2;  // значение метрики gauge
+  string ID = 3; // идентификатор метрики
+  string Type = 4; // тип метрики
+}
+
+message UpdateMetricRequest {
+  repeated Metric Metrics = 1;
+}
+
+message UpdateMetricResponse {
+  string error = 1; // ошибка
+}
+
+service Metrics {
+  rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricResponse);
+}

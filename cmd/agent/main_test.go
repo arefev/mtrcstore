@@ -32,12 +32,15 @@ func TestRunSuccess(t *testing.T) {
 		defer ctrl.Finish()
 
 		client := mock_service.NewMockSender(ctrl)
-		client.EXPECT().DoRequest(gomock.Any(), "http://localhost:8080/updates/", gomock.Any(), gomock.Any()).MinTimes(1)
+		client.EXPECT().Request(gomock.Any(), gomock.Any()).MinTimes(1)
 
 		args := []string{
 			"-p=1",
 			"-r=2",
 		}
-		require.ErrorIs(t, run(ctx, args, client), agent.ErrWorkerCanceled)
+		config, err := NewConfig(args)
+		require.NoError(t, err)
+
+		require.ErrorIs(t, run(ctx, &config, client), agent.ErrWorkerCanceled)
 	})
 }

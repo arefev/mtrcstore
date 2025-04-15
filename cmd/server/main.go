@@ -10,11 +10,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/arefev/mtrcstore/internal/proto"
 	"github.com/arefev/mtrcstore/internal/server"
 	"github.com/arefev/mtrcstore/internal/server/handler"
 	"github.com/arefev/mtrcstore/internal/server/logger"
 	"github.com/arefev/mtrcstore/internal/server/repository"
+	"github.com/arefev/mtrcstore/internal/server/service"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
 	"go.uber.org/zap"
 )
@@ -48,9 +51,7 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("logger init failed: %w", err)
 	}
 
-	cLog.Info("filePath", zap.Int("", len(config.FileStoragePath)))
-
-	storage, storageType, err := initStorage(&config, cLog)
+	storage, err := initStorage(&config, cLog)
 	if err != nil {
 		return fmt.Errorf("main run failed: %w", err)
 	}
@@ -61,12 +62,51 @@ func run(ctx context.Context, args []string) error {
 		}
 	}()
 
-	metricHandlers := handler.NewMetricHandlers(storage, cLog)
-	r := server.InitRouter(metricHandlers, cLog, config.SecretKey, config.CryptoKey)
+	switch {
+	case config.GRPCAddress != "":
+		return runGRPC(ctx, storage, &config, cLog)
+	default:
+		return runServer(ctx, storage, &config, cLog)
+	}
+}
+
+func runGRPC(ctx context.Context, storage repository.Storage, c *Config, l *zap.Logger) error {
+	listen, err := net.Listen("tcp", c.GRPCAddress)
+	if err != nil {
+		return fmt.Errorf("runGRPC Listen failed: %w", err)
+	}
+
+	s := grpc.NewServer()
+	proto.RegisterMetricsServer(s, &service.GRPCServer{
+		Storage: storage,
+	})
+
+	go func() {
+		<-ctx.Done()
+		l.Info("GRPC stopped")
+		s.Stop()
+	}()
+
+	l.Info(
+		"GRPC running",
+		zap.String("address", c.GRPCAddress),
+		zap.String("log level", c.LogLevel),
+	)
+
+	if err := s.Serve(listen); err != nil {
+		return fmt.Errorf("runGRPC Serve failed: %w", err)
+	}
+
+	return nil
+}
+
+func runServer(ctx context.Context, storage repository.Storage, c *Config, l *zap.Logger) error {
+	metricHandlers := handler.NewMetricHandlers(storage, l)
+	r := server.InitRouter(metricHandlers, l, c.TrustedSubnet, c.SecretKey, c.CryptoKey)
 
 	g, gCtx := errgroup.WithContext(ctx)
 	serv := http.Server{
-		Addr:    config.Address,
+		Addr:    c.Address,
 		Handler: r,
 		BaseContext: func(_ net.Listener) context.Context {
 			return gCtx
@@ -75,15 +115,14 @@ func run(ctx context.Context, args []string) error {
 
 	g.Go(func() error {
 		<-ctx.Done()
-		cLog.Info("Server stopped")
+		l.Info("Server stopped")
 		return serv.Shutdown(ctx)
 	})
 
-	cLog.Info(
+	l.Info(
 		"Server running",
-		zap.String("address", config.Address),
-		zap.String("log level", config.LogLevel),
-		zap.String("storage type", storageType),
+		zap.String("address", c.Address),
+		zap.String("log level", c.LogLevel),
 	)
 
 	g.Go(serv.ListenAndServe)
@@ -95,9 +134,8 @@ func run(ctx context.Context, args []string) error {
 	return nil
 }
 
-func initStorage(config *Config, cLog *zap.Logger) (repository.Storage, string, error) {
+func initStorage(config *Config, cLog *zap.Logger) (repository.Storage, error) {
 	var storage repository.Storage
-	var storageType string
 	var err error
 
 	switch {
@@ -106,18 +144,13 @@ func initStorage(config *Config, cLog *zap.Logger) (repository.Storage, string, 
 		if err != nil {
 			err = fmt.Errorf("repository init failed: %w", err)
 		}
-
-		storageType = "DB"
 	case len(config.FileStoragePath) > 0:
 		storage = repository.
 			NewFile(config.StoreInterval, config.FileStoragePath, config.Restore, cLog).
 			WorkerRun()
-
-		storageType = "File"
 	default:
 		storage = repository.NewMemory()
-		storageType = "Memory"
 	}
 
-	return storage, storageType, err
+	return storage, err
 }
